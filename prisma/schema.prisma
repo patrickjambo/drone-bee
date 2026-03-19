@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPERADMIN
+  MANAGER
+}
+
+enum SaleType {
+  BATCH
+  UNIT
+}
+
+enum SaleStatus {
+  CONFIRMED
+  PENDING_APPROVAL
+  VOIDED
+}
+
+enum MovementType {
+  SALE
+  RESTOCK
+  ADJUSTMENT
+  AUDIT_CORRECTION
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  full_name     String
+  username      String    @unique
+  email         String?   @unique
+  password_hash String
+  role          Role      @default(MANAGER)
+  shift_start   String? // e.g., "08:00"
+  shift_end     String? // e.g., "17:00"
+  phone         String?
+  is_blocked    Boolean   @default(false)
+  is_deleted    Boolean   @default(false)
+  created_by_id String?
+  created_by    User?     @relation("CreatedUsers", fields: [created_by_id], references: [id])
+  created_users User[]    @relation("CreatedUsers")
+  created_at    DateTime  @default(now())
+  last_login    DateTime?
+  last_ip       String?
+
+  sales             Sale[]
+  stock_movements   StockMovement[]
+  alerts            Alert[]         @relation("AlertManager")
+  resolved_alerts   Alert[]         @relation("AlertResolver")
+  audit_logs        AuditLog[]
+  price_history     PriceHistory[]
+}
+
+model Product {
+  id                  String   @id @default(cuid())
+  name                String
+  honey_type          String
+  origin              String?
+  image_url           String?
+  batch_size          Int
+  price_per_batch     Float
+  price_per_unit      Float
+  stock_units         Int      @default(0)
+  min_stock_threshold Int      @default(0)
+  is_active           Boolean  @default(true)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  sales                  Sale[]
+  stock_movements        StockMovement[]
+  alerts                 Alert[]
+  daily_reconciliations  DailyReconciliation[]
+  price_history          PriceHistory[]
+}
+
+model Sale {
+  id                 String     @id @default(cuid())
+  manager_id         String
+  manager            User       @relation(fields: [manager_id], references: [id])
+  product_id         String
+  product            Product    @relation(fields: [product_id], references: [id])
+  sale_type          SaleType
+  quantity           Int
+  unit_price_at_sale Float
+  total_amount       Float
+  status             SaleStatus @default(CONFIRMED)
+  flagged            Boolean    @default(false)
+  flag_reason        String?
+  created_at         DateTime   @default(now())
+
+  alerts Alert[]
+}
+
+model StockMovement {
+  id              String       @id @default(cuid())
+  product_id      String
+  product         Product      @relation(fields: [product_id], references: [id])
+  movement_type   MovementType
+  quantity_change Int
+  balance_after   Int
+  notes           String?
+  performed_by_id String
+  performed_by    User         @relation(fields: [performed_by_id], references: [id])
+  created_at      DateTime     @default(now())
+}
+
+model Alert {
+  id                 String        @id @default(cuid())
+  alert_type         String
+  severity           AlertSeverity
+  title              String
+  description        String
+  related_manager_id String?
+  manager            User?         @relation("AlertManager", fields: [related_manager_id], references: [id])
+  related_product_id String?
+  product            Product?      @relation(fields: [related_product_id], references: [id])
+  related_sale_id    String?
+  sale               Sale?         @relation(fields: [related_sale_id], references: [id])
+  is_resolved        Boolean       @default(false)
+  resolved_at        DateTime?
+  resolved_by_id     String?
+  resolved_by        User?         @relation("AlertResolver", fields: [resolved_by_id], references: [id])
+  created_at         DateTime      @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  user_id     String?
+  user        User?    @relation(fields: [user_id], references: [id])
+  action_type String
+  description String
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+}
+
+model DailyReconciliation {
+  id                  String   @id @default(cuid())
+  date                DateTime @default(now()) @db.Date
+  product_id          String
+  product             Product  @relation(fields: [product_id], references: [id])
+  opening_stock       Int
+  units_sold          Int      @default(0)
+  expected_closing    Int
+  actual_closing      Int?
+  discrepancy         Int      @default(0)
+  report_generated_at DateTime @default(now())
+}
+
+model PriceHistory {
+  id              String   @id @default(cuid())
+  product_id      String
+  product         Product  @relation(fields: [product_id], references: [id])
+  old_batch_price Float?
+  new_batch_price Float
+  old_unit_price  Float?
+  new_unit_price  Float
+  changed_by_id   String
+  changed_by      User     @relation(fields: [changed_by_id], references: [id])
+  changed_at      DateTime @default(now())
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  type        String   @default("Registered") // VIP, Registered, Walk-in
+  points      Int      @default(0)
+  total_spent Float    @default(0)
+  last_visit  DateTime @default(now())
+  created_at  DateTime @default(now())
+}

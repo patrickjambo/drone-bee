@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { Plus, Package, Search } from 'lucide-react';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-
+  
   const [formData, setFormData] = useState({
     name: '',
     honey_type: '',
@@ -21,6 +21,8 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
+    const interval = setInterval(fetchProducts, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchProducts = async () => {
@@ -75,6 +77,10 @@ export default function ProductsPage() {
       if (res.ok) {
         setShowModal(false);
         fetchProducts();
+        setFormData({
+          name: '', honey_type: '', origin: '', batch_size: 10,
+          price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5
+        });
       }
     } catch (error) {
       console.error(error);
@@ -82,63 +88,84 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
-      <header className="bg-amber-600 text-white shadow-md rounded-b-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight">Honey Product Management</h1>
-          <Link href="/admin/dashboard" className="text-amber-100 font-medium hover:text-white transition">
-            &larr; Back to Dashboard
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
+    <div className="h-full">
+      
+      
+      <div className="h-full w-full">
+        
+        <div className="h-full w-full">
+        <header className="flex justify-between items-end mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">Products & Inventory</h1>
+            <p className="text-gray-500 font-medium">Manage stock and add new honey items</p>
+          </div>
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium shadow transition"
+            className="bg-amber-500 hover:bg-[#3211b8] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#4318FF]/20"
           >
-            + Add New Product
+            <Plus size={20} />
+            Add New Product
           </button>
-        </div>
+        </header>
 
         {loading ? (
-          <p className="text-gray-500">Loading products...</p>
+          <div className="flex justify-center p-12 text-gray-500">Loading inventory...</div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y border-gray-200">
-              <thead className="bg-gray-50 text-left">
+          <div className="bg-white rounded-[20px] shadow-sm border border-[#E9EDF7] overflow-hidden">
+            <div className="p-6 border-b border-[#E9EDF7] flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Inventory List</h2>
+              <div className="flex bg-[#F4F7FE] items-center px-4 py-2 rounded-xl">
+                 <Search size={18} className="text-gray-500 mr-2" />
+                 <input type="text" placeholder="Search products..." className="bg-transparent border-none outline-none text-gray-900 text-sm" />
+              </div>
+            </div>
+            <table className="min-w-full text-left border-collapse">
+              <thead className="bg-[#F4F7FE] border-b border-[#E9EDF7]">
                 <tr>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Type / Origin</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Units</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price (RWF)</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide">PRODUCT NAME</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide">TYPE / ORIGIN</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide">STOCK</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide">PRICE (RWF)</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide">STATUS</th>
+                  <th className="py-4 px-6 text-gray-500 font-bold text-sm tracking-wide text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {products.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-4 text-center text-gray-500">No products found.</td></tr>
+                  <tr><td colSpan={6} className="py-8 px-6 text-center text-gray-500">No products found in inventory.</td></tr>
                 ) : (
-                  products.map((p: any) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">{p.name}</td>
-                      <td className="px-6 py-4 text-gray-600 text-sm">{p.honey_type} <br/><span className="text-xs text-gray-400">{p.origin}</span></td>
-                      <td className="px-6 py-4">
-                        <span className={`font-bold ${p.stock_units < p.min_stock_threshold ? 'text-red-600' : 'text-green-600'}`}>
-                          {p.stock_units}
+                  products.map((p) => (
+                    <tr key={p.id} className="border-b border-[#E9EDF7] hover:bg-[#F4F7FE]/50 transition-colors">
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-[#E5ECF6] flex items-center justify-center text-amber-500">
+                             <Package size={20} />
+                          </div>
+                          <span className="font-bold text-gray-900">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <p className="font-medium text-gray-900">{p.honey_type}</p>
+                        <p className="text-sm text-gray-500">{p.origin || 'N/A'}</p>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`font-bold ${p.stock_units < p.min_stock_threshold ? 'text-[#EE5D50] bg-[#EE5D50]/10 px-3 py-1 rounded-lg' : 'text-[#01B574] bg-[#01B574]/10 px-3 py-1 rounded-lg'}`}>
+                          {p.stock_units} Units
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-600 font-mono">{p.price_per_unit.toLocaleString()}</td>
-                      <td className="px-6 py-4">
-                        {p.is_active ? <span className="text-green-600 bg-green-50 px-2 py-1 rounded text-xs">Active</span> : <span className="text-red-500 bg-red-50 px-2 py-1 rounded text-xs">Inactive</span>}
+                      <td className="py-4 px-6 font-bold text-gray-900">
+                        {p.price_per_unit.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="py-4 px-6">
+                        {p.is_active ? 
+                          <span className="text-[#01B574] font-medium text-sm">Active</span> : 
+                          <span className="text-[#EE5D50] font-medium text-sm">Inactive</span>
+                        }
+                      </td>
+                      <td className="py-4 px-6 text-right">
                         <button 
                           onClick={() => handleRestock(p)}
-                          className="text-amber-600 hover:text-amber-900 font-medium text-sm border border-amber-200 px-3 py-1 rounded bg-amber-50"
+                          className="bg-[#1E2336] hover:bg-[#111421] text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
                         >
                           Restock
                         </button>
@@ -151,55 +178,51 @@ export default function ProductsPage() {
           </div>
         )}
 
+        {/* Add Product Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6">
-              <h3 className="text-xl font-bold mb-4 border-b pb-2">Add New Honey Product</h3>
-              <form onSubmit={handleSubmit} className="space-y-4 text-gray-800">
-                <div className="grid grid-cols-2 gap-4">
+          <div className="fixed inset-0 bg-[#1E2336]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="p-6 border-b border-[#E9EDF7] bg-[#F4F7FE]">
+                <h3 className="text-xl font-bold text-gray-900">Add New Honey Product</h3>
+              </div>
+              <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <div className="grid grid-cols-2 gap-5">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Product Name</label>
-                    <input type="text" required className="w-full border rounded p-2 focus:ring-amber-500 focus:border-amber-500" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Product Name</label>
+                    <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Honey Type</label>
-                    <input type="text" placeholder="e.g. Raw, Infused" required className="w-full border rounded p-2" value={formData.honey_type} onChange={(e) => setFormData({...formData, honey_type: e.target.value})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Type (e.g. Raw)</label>
+                    <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.honey_type} onChange={(e) => setFormData({...formData, honey_type: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Origin (Optional)</label>
-                    <input type="text" placeholder="e.g. Nyungwe Forest" className="w-full border rounded p-2" value={formData.origin} onChange={(e) => setFormData({...formData, origin: e.target.value})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Origin</label>
+                    <input type="text" className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.origin} onChange={(e) => setFormData({...formData, origin: e.target.value})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Price per Jar/Unit (RWF)</label>
-                    <input type="number" required className="w-full border rounded p-2" value={formData.price_per_unit || ''} onChange={(e) => setFormData({...formData, price_per_unit: Number(e.target.value)})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Price / Unit (RWF)</label>
+                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.price_per_unit || ''} onChange={(e) => setFormData({...formData, price_per_unit: Number(e.target.value)})} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Price per Batch (RWF)</label>
-                    <input type="number" required className="w-full border rounded p-2" value={formData.price_per_batch || ''} onChange={(e) => setFormData({...formData, price_per_batch: Number(e.target.value)})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Batch Size (Jars per Box)</label>
-                    <input type="number" required className="w-full border rounded p-2" value={formData.batch_size || ''} onChange={(e) => setFormData({...formData, batch_size: Number(e.target.value)})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Minimum Stock Alert Threshold</label>
-                    <input type="number" required className="w-full border rounded p-2" value={formData.min_stock_threshold || ''} onChange={(e) => setFormData({...formData, min_stock_threshold: Number(e.target.value)})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Low Stock Alert Level</label>
+                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.min_stock_threshold || ''} onChange={(e) => setFormData({...formData, min_stock_threshold: Number(e.target.value)})} />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Initial Stock (Individual Units)</label>
-                    <input type="number" required className="w-full border rounded p-2" value={formData.stock_units || ''} onChange={(e) => setFormData({...formData, stock_units: Number(e.target.value)})} />
+                    <label className="block text-sm font-bold text-gray-900 mb-2">Initial Stock Amount</label>
+                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.stock_units || ''} onChange={(e) => setFormData({...formData, stock_units: Number(e.target.value)})} />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border rounded font-medium hover:bg-gray-50">Cancel</button>
-                  <button type="submit" className="px-4 py-2 bg-amber-600 text-white font-medium rounded hover:bg-amber-700">Save Product</button>
+                <div className="flex justify-end gap-3 mt-8 pt-4">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-[#F4F7FE] transition-colors">Cancel</button>
+                  <button type="submit" className="bg-amber-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-[#3211b8] transition-colors shadow-lg shadow-[#4318FF]/20">Save Product</button>
                 </div>
               </form>
             </div>
           </div>
         )}
-      </main>
+      </div>
+      </div>
     </div>
   );
 }
