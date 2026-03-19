@@ -6,7 +6,7 @@ import ws from 'ws'
 neonConfig.webSocketConstructor = ws
 
 const prismaClientSingleton = () => {
-  const connectionString = `${process.env.DATABASE_URL}`
+  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL;
   const pool = new Pool({ connectionString })
   // @ts-ignore
   const adapter = new PrismaNeon(pool)
