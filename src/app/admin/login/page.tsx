@@ -32,7 +32,7 @@ export default function AdminLogin() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.details || data.error || 'Login failed');
       
       router.push('/admin/dashboard');
     } catch (err: any) {

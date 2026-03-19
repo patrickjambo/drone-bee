@@ -33,7 +33,7 @@ export default function ManagerLogin() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.details || data.error || 'Login failed');
       router.push('/manager/dashboard');
     } catch (err: any) {
       setError(err.message);
