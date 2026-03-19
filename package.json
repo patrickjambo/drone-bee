@@ -7,20 +7,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "node seed-env.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.5.0",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@types/ws": "^8.18.1",
     "bcrypt": "^6.0.0",
+    "install": "^0.13.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.577.0",
     "next": "16.1.7",
     "nodemailer": "^8.0.3",
-    "pg": "^8.20.0",
+    "npm": "^11.12.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
