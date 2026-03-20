@@ -40,17 +40,23 @@ export async function POST(req: Request) {
   try {
     const { full_name, username, shift_start, shift_end, phone, password } = await req.json();
 
+    const normalizedUsername = username?.trim();
+    
+    if (!normalizedUsername) {
+      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    }
+
     // Use provided password or generate a secure 8-character random temporary password
-    const temporaryPassword = password || crypto.randomBytes(4).toString('hex');
+    const temporaryPassword = password?.trim() || crypto.randomBytes(4).toString('hex');
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
     const newManager = await prisma.user.create({
       data: {
-        full_name: full_name || username,
-        username,
+        full_name: full_name?.trim() || normalizedUsername,
+        username: normalizedUsername,
         shift_start: shift_start || '08:00',
         shift_end: shift_end || '17:00',
-        phone: phone || 'N/A',
+        phone: phone?.trim() || 'N/A',
         password_hash: passwordHash,
         role: 'MANAGER',
         created_by_id: adminId

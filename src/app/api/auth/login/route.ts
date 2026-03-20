@@ -7,8 +7,23 @@ export async function POST(req: Request) {
   try {
     const { username, password, portal } = await req.json();
 
-    const user = await prisma.user.findUnique({
-      where: { username },
+    if (!username || !password) {
+      return NextResponse.json(
+        { error: 'Username and password are required' },
+        { status: 400 }
+      );
+    }
+
+    const normalizedUsername = username.trim();
+    const normalizedPassword = password.trim();
+
+    const user = await prisma.user.findFirst({
+      where: { 
+        username: {
+          equals: normalizedUsername,
+          mode: 'insensitive' // Case-insensitive matching
+        }
+      },
     });
 
     if (!user || user.is_deleted) {
@@ -25,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(normalizedPassword, user.password_hash);
     
     if (!isValidPassword) {
       return NextResponse.json(
