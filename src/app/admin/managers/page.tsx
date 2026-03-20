@@ -12,6 +12,7 @@ export default function AdminManagerCreation() {
   const [formData, setFormData] = useState({
     full_name: '',
     username: '',
+    password: '',
     shift_start: '08:00',
     shift_end: '17:00',
     phone: '',
@@ -48,7 +49,7 @@ export default function AdminManagerCreation() {
       if (res.ok) {
         setTempCredentials({ username: data.username, password: data.temporaryPassword });
         fetchManagers();
-        setFormData({ full_name: '', username: '', shift_start: '08:00', shift_end: '17:00', phone: ''});
+        setFormData({ full_name: '', username: '', password: '', shift_start: '08:00', shift_end: '17:00', phone: ''});
       }
     } catch (e) {
       console.error(e);
@@ -156,6 +157,10 @@ export default function AdminManagerCreation() {
                       <label className="block text-sm font-bold text-gray-900 mb-2">Username (Auto-suggested)</label>
                       <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} onFocus={() => { if(!formData.username) setFormData({...formData, username: formData.full_name.toLowerCase().replace(/\s/g, '_')}); }} />
                     </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-2">Password</label>
+                      <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                    </div>
                     <div className="grid grid-cols-2 gap-5">
                       <div>
                         <label className="block text-sm font-bold text-gray-900 mb-2">Shift Start</label>
@@ -193,7 +198,7 @@ export default function AdminManagerCreation() {
                       <span className="text-gray-900 font-bold">{tempCredentials.username}</span>
                     </div>
                     <div className="flex justify-between items-center pt-1">
-                      <span className="text-gray-500 font-sans font-bold text-sm">TEMPORARY PASSWORD</span>
+                      <span className="text-gray-500 font-sans font-bold text-sm">SET PASSWORD</span>
                       <span className="text-amber-500 font-black tracking-wider">{tempCredentials.password}</span>
                     </div>
                   </div>
