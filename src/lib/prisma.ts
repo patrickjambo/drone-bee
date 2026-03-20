@@ -11,8 +11,10 @@ function createPrismaClient() {
   const url = process.env.DATABASE_URL;
   
   if (!url) {
-    console.warn("DATABASE_URL not set, using fallback PrismaClient");
-    return new PrismaClient();
+    throw new Error(
+      "DATABASE_URL environment variable is not set. " +
+      "Please add it to your Vercel environment variables or .env file"
+    );
   }
 
   try {
@@ -21,8 +23,8 @@ function createPrismaClient() {
     const adapter = new PrismaNeon(pool);
     return new PrismaClient({ adapter });
   } catch (e) {
-    console.error("Failed to create Prisma with Neon, using fallback:", e);
-    return new PrismaClient();
+    console.error("Failed to create Prisma with Neon adapter:", e);
+    throw e;
   }
 }
 
