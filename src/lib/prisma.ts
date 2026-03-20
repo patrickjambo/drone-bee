@@ -8,24 +8,25 @@ neonConfig.webSocketConstructor = ws;
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL;
   
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is not defined");
+  if (!url) {
+    console.warn("DATABASE_URL not set, using fallback PrismaClient");
+    return new PrismaClient();
   }
 
-  const pool = new Pool({ connectionString });
-  // @ts-ignore
-  const adapter = new PrismaNeon(pool);
-
-  return new PrismaClient({
-    adapter,
-    log: process.env.NODE_ENV === "development" ? ["query"] : [],
-  });
+  try {
+    const pool = new Pool({ connectionString: url });
+    // @ts-ignore - Neon adapter type issue
+    const adapter = new PrismaNeon(pool);
+    return new PrismaClient({ adapter });
+  } catch (e) {
+    console.error("Failed to create Prisma with Neon, using fallback:", e);
+    return new PrismaClient();
+  }
 }
 
-export const prisma =
-  globalForPrisma.prisma || createPrismaClient();
+export const prisma = globalForPrisma.prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
