@@ -1,37 +1,40 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
 
-neonConfig.webSocketConstructor = ws;
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient | undefined;
+};
 
 function createPrismaClient() {
   const url = process.env.DATABASE_URL;
-  
+
   if (!url) {
-    throw new Error(
-      "DATABASE_URL environment variable is not set. " +
-      "Please add it to your Vercel environment variables or .env file"
-    );
+    // For build time, return basic client without adapter
+    return new PrismaClient();
   }
 
   try {
+    // Dynamically require to avoid build-time loading
+    const { Pool } = require("pg");
+    const { PrismaPg } = require("@prisma/adapter-pg");
+
     const pool = new Pool({ connectionString: url });
-    // @ts-ignore - Neon adapter type issue
-    const adapter = new PrismaNeon(pool);
+    const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
   } catch (e) {
-    console.error("Failed to create Prisma with Neon adapter:", e);
-    throw e;
+    console.error("Failed to create PrismaClient with adapter:", e);
+    // Fallback to basic client
+    return new PrismaClient();
   }
 }
 
-export const prisma = globalForPrisma.prisma || createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+export const prisma =
+  globalForPrisma.prisma ??
+  (() => {
+    const client = createPrismaClient();
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = client;
+    }
+    return client;
+  })();
 
 export default prisma;
