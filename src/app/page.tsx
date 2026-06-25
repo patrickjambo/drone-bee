@@ -8,18 +8,18 @@ import {
   Truck, Sparkles, Menu, X,
 } from "lucide-react";
 
-const heroProducts = [
-  { src: "/p1.png", fit: "cover" },
-  { src: "/p2.png", fit: "cover" },
-  { src: "/p3.png", fit: "cover" },
-  { src: "/suko22.png", fit: "cover" },
-  { src: "/logo.png", fit: "contain" },
+const heroSlides = [
+  { src: "/p1.jpg", fit: "cover", label: "Classic Honey Jar", sub: "500g · Glass Jar" },
+  { src: "/p2.jpg", fit: "cover", label: "Family Honey Can", sub: "2L · Jerrycan" },
+  { src: "/p3.jpg", fit: "cover", label: "Squeeze Bottle", sub: "750ml · Easy-Pour" },
+  { src: "/suko22.jpg", fit: "cover", label: "Loved Across Rwanda", sub: "Our customers' favourite" },
+  { src: "/logo.png", fit: "contain", label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" },
 ];
 
 const products = [
-  { img: "/p1.png", name: "Classic Honey Jar", size: "500g · Glass Jar", desc: "Our signature raw, unfiltered honey — golden, thick and rich.", tag: "Bestseller", tagCls: "bg-amber-400 text-[#171B2C]" },
-  { img: "/p2.png", name: "Family Honey Can", size: "2L · Jerrycan", desc: "Pure natural honey in a generous size for the whole household.", tag: "Best Value", tagCls: "bg-emerald-400 text-[#0c2b1e]" },
-  { img: "/p3.png", name: "Squeeze Bottle", size: "750ml · Easy-Pour", desc: "Everyday honey in a convenient, mess-free squeeze bottle.", tag: "New", tagCls: "bg-sky-400 text-[#0b2230]" },
+  { img: "/p1.jpg", name: "Classic Honey Jar", size: "500g · Glass Jar", desc: "Our signature raw, unfiltered honey — golden, thick and rich.", tag: "Bestseller", tagCls: "bg-amber-400 text-[#171B2C]" },
+  { img: "/p2.jpg", name: "Family Honey Can", size: "2L · Jerrycan", desc: "Pure natural honey in a generous size for the whole household.", tag: "Best Value", tagCls: "bg-emerald-400 text-[#0c2b1e]" },
+  { img: "/p3.jpg", name: "Squeeze Bottle", size: "750ml · Easy-Pour", desc: "Everyday honey in a convenient, mess-free squeeze bottle.", tag: "New", tagCls: "bg-sky-400 text-[#0b2230]" },
 ];
 
 export default function Home() {
@@ -27,7 +27,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const t = setInterval(() => setCurrent((p) => (p + 1) % heroProducts.length), 3500);
+    const t = setInterval(() => setCurrent((p) => (p + 1) % heroSlides.length), 3500);
     return () => clearInterval(t);
   }, []);
 
@@ -116,35 +116,44 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: product showcase */}
-          <div className="relative flex items-center justify-center mt-8 lg:mt-0">
-            <div className="absolute inset-0 m-auto w-[85%] h-[85%] rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/10 blur-3xl pointer-events-none" />
-            <div className="relative w-full max-w-[30rem] lg:max-w-[34rem] aspect-[4/5]">
-              <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden border border-white/15 bg-gradient-to-br from-amber-200 via-amber-100 to-orange-50 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
-                {heroProducts.map((slide, i) => (
-                  <img key={slide.src} src={slide.src} alt="Drone Bee honey" loading="eager"
-                    className={`absolute inset-0 w-full h-full transition-opacity duration-[1200ms] ease-in-out ${slide.fit === "contain" ? "object-contain p-10" : "object-cover"} ${i === current ? "opacity-100" : "opacity-0"}`} />
-                ))}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+          {/* Right: product gallery */}
+          <div className="relative w-full max-w-[34rem] mx-auto mt-6 lg:mt-0">
+            <div className="absolute -inset-6 bg-gradient-to-br from-amber-400/25 to-orange-500/10 blur-3xl rounded-full pointer-events-none" />
+
+            {/* Main image */}
+            <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/15 bg-gradient-to-br from-amber-200 via-amber-100 to-orange-50 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+              {heroSlides.map((s, i) => (
+                <img key={s.src} src={s.src} alt={s.label} loading="eager"
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-[1100ms] ease-in-out ${s.fit === "contain" ? "object-contain p-10" : "object-cover"} ${i === current ? "opacity-100" : "opacity-0"}`} />
+              ))}
+
+              {/* Made in badge */}
+              <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2">
+                <p className="text-[11px] text-amber-200 font-semibold leading-none">Made in</p>
+                <p className="text-sm font-black text-white">🇷🇼 Rwanda</p>
               </div>
-              {/* floating badges */}
-              <div className="absolute -bottom-5 -left-3 sm:-left-6 bg-white text-[#171B2C] rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"><Leaf size={20} className="text-amber-600" /></div>
-                <div>
-                  <p className="text-xs text-gray-500 font-semibold leading-none">Quality</p>
-                  <p className="text-sm font-black leading-tight">100% Pure & Raw</p>
-                </div>
+
+              {/* Caption */}
+              <div className="absolute inset-x-0 bottom-0 p-5 pt-12 bg-gradient-to-t from-black/75 via-black/30 to-transparent">
+                <p className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.18em]">{heroSlides[current].sub}</p>
+                <p className="text-white text-2xl font-black leading-tight">{heroSlides[current].label}</p>
               </div>
-              <div className="absolute -top-4 -right-3 sm:-right-5 bg-[#171B2C] border border-white/10 rounded-2xl px-4 py-2.5 shadow-2xl">
-                <p className="text-[11px] text-gray-400 font-semibold leading-none">Made in</p>
-                <p className="text-sm font-black text-[#E8C265]">🇷🇼 Rwanda</p>
-              </div>
-              {/* dots */}
-              <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 flex gap-2">
-                {heroProducts.map((_, i) => (
-                  <button key={i} onClick={() => setCurrent(i)} aria-label={`Show product ${i + 1}`} className={`h-2 rounded-full transition-all ${i === current ? "w-7 bg-amber-400" : "w-2 bg-white/30"}`} />
-                ))}
-              </div>
+            </div>
+
+            {/* Floating rating chip */}
+            <div className="absolute -top-4 -left-3 sm:-left-5 bg-white text-[#171B2C] rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-2.5 z-10">
+              <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} size={13} className="text-amber-400" fill="currentColor" />)}</div>
+              <span className="text-xs font-black">4.9/5</span>
+            </div>
+
+            {/* Thumbnail strip — all images always visible */}
+            <div className="mt-5 grid grid-cols-5 gap-2.5 sm:gap-3">
+              {heroSlides.map((s, i) => (
+                <button key={s.src} onClick={() => setCurrent(i)} aria-label={s.label}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === current ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.04]" : "border-white/10 opacity-55 hover:opacity-100"}`}>
+                  <img src={s.src} alt={s.label} className={`w-full h-full ${s.fit === "contain" ? "object-contain p-1.5 bg-amber-50" : "object-cover"}`} />
+                </button>
+              ))}
             </div>
           </div>
         </div>
