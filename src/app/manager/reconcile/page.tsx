@@ -68,12 +68,15 @@ export default function ManagerReconciliation() {
   };
 
   return (
-    <div className="h-full w-full">
-      
+    <div className="w-full">
+      <div className="mb-6">
+        <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+          <FileCheck className="text-amber-500" size={26} /> Daily Reconciliation
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">Count your physical stock and submit the end-of-day reconciliation. Discrepancies are flagged automatically.</p>
+      </div>
 
-      <main className="ml-[260px] flex-1 p-8 overflow-y-auto">
-        
-
+      <main className="w-full">
         {loading ? (
           <div className="flex justify-center p-12 text-gray-400 font-medium">Loading inventory data...</div>
         ) : (

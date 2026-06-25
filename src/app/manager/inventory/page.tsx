@@ -1,28 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Package, Search } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Package, Search, X, PackagePlus, AlertTriangle } from 'lucide-react';
 
+type Product = {
+  id: string;
+  name: string;
+  honey_type: string;
+  origin?: string | null;
+  batch_size: number;
+  price_per_batch: number;
+  price_per_unit: number;
+  stock_units: number;
+  min_stock_threshold: number;
+  is_active: boolean;
+};
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  
+  const [search, setSearch] = useState('');
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [restockTarget, setRestockTarget] = useState<Product | null>(null);
+
   const [formData, setFormData] = useState({
-    name: '',
-    honey_type: '',
-    origin: '',
-    batch_size: 10,
-    price_per_batch: 0,
-    price_per_unit: 0,
-    stock_units: 0,
-    min_stock_threshold: 5,
+    name: '', honey_type: '', origin: '', batch_size: 12,
+    price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5,
   });
 
   useEffect(() => {
     fetchProducts();
-    const interval = setInterval(fetchProducts, 10000);
+    const interval = setInterval(fetchProducts, 12000);
     return () => clearInterval(interval);
   }, []);
 
@@ -30,7 +40,7 @@ export default function ProductsPage() {
     try {
       const res = await fetch('/api/manager/products');
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) setProducts(data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -38,33 +48,20 @@ export default function ProductsPage() {
     }
   };
 
-  const handleRestock = async (product: any) => {
-    const qtyStr = prompt(`How many units of ${product.name} are you adding?`);
-    if (!qtyStr) return;
-    const qty = parseInt(qtyStr, 10);
-    if (isNaN(qty) || qty <= 0) {
-      alert('Invalid quantity');
-      return;
-    }
-    
-    try {
-      const res = await fetch(`/api/manager/products/${product.id}/restock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: qty })
-      });
-      if (res.ok) {
-        alert('Stock updated successfully');
-        fetchProducts();
-      } else {
-        const data = await res.json();
-        alert('Failed: ' + data.error);
-      }
-    } catch (err) {
-      alert('Error updating stock');
-      console.error(err);
-    }
+  const showToast = (type: 'success' | 'error', msg: string) => {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3500);
   };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.honey_type || '').toLowerCase().includes(q) ||
+      (p.origin || '').toLowerCase().includes(q)
+    );
+  }, [products, search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,143 +69,226 @@ export default function ProductsPage() {
       const res = await fetch('/api/manager/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          price_per_batch: formData.price_per_batch || formData.price_per_unit * formData.batch_size,
+        }),
       });
-
       if (res.ok) {
-        setShowModal(false);
+        setShowAdd(false);
+        setFormData({ name: '', honey_type: '', origin: '', batch_size: 12, price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5 });
         fetchProducts();
-        setFormData({
-          name: '', honey_type: '', origin: '', batch_size: 10,
-          price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5
-        });
+        showToast('success', 'Product added to inventory.');
+      } else {
+        const d = await res.json().catch(() => ({}));
+        showToast('error', d.error || 'Failed to add product.');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Something went wrong.');
     }
   };
 
+  const totalUnits = products.reduce((a, p) => a + p.stock_units, 0);
+  const lowCount = products.filter(p => p.stock_units > 0 && p.stock_units <= p.min_stock_threshold).length;
+  const outCount = products.filter(p => p.stock_units === 0).length;
+
+  const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400';
+  const field = (label: string, node: React.ReactNode) => (
+    <div><label className="block text-xs font-bold text-gray-600 mb-1.5">{label}</label>{node}</div>
+  );
+
   return (
-    <div className="h-full w-full">
-      
-      
-      <main className="ml-[280px] flex-1 p-8 overflow-y-auto">
-        
+    <div className="w-full">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2"><Package className="text-amber-500" size={26} /> Inventory</h1>
+          <p className="text-gray-500 text-sm mt-1">Add honey products, track stock and restock low items.</p>
+        </div>
+        <button onClick={() => setShowAdd(true)} className="bg-amber-500 hover:bg-amber-600 text-gray-900 px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm transition">
+          <Plus size={18} /> Add Product
+        </button>
+      </div>
+
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatTile label="Products" value={products.length} tint="bg-blue-50 text-blue-600" />
+        <StatTile label="Total Units" value={totalUnits.toLocaleString()} tint="bg-emerald-50 text-emerald-600" />
+        <StatTile label="Low Stock" value={lowCount} tint="bg-amber-50 text-amber-600" />
+        <StatTile label="Out of Stock" value={outCount} tint="bg-red-50 text-red-600" />
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-gray-900">Inventory List</h2>
+          <div className="relative w-full sm:w-72">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products…"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+          </div>
+        </div>
 
         {loading ? (
-          <div className="flex justify-center p-12 text-[#A3AED0]">Loading inventory...</div>
+          <div className="p-12 text-center text-gray-400">Loading inventory…</div>
         ) : (
-          <div className="bg-white rounded-[20px] shadow-sm border border-[#E9EDF7] overflow-hidden">
-            <div className="p-6 border-b border-[#E9EDF7] flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#2B3674]">Inventory List</h2>
-              <div className="flex bg-[#F4F7FE] items-center px-4 py-2 rounded-xl">
-                 <Search size={18} className="text-[#A3AED0] mr-2" />
-                 <input type="text" placeholder="Search products..." className="bg-transparent border-none outline-none text-[#2B3674] text-sm" />
-              </div>
-            </div>
+          <div className="overflow-x-auto">
             <table className="min-w-full text-left border-collapse">
-              <thead className="bg-[#F4F7FE] border-b border-[#E9EDF7]">
+              <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide">PRODUCT NAME</th>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide">TYPE / ORIGIN</th>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide">STOCK</th>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide">PRICE (RWF)</th>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide">STATUS</th>
-                  <th className="py-4 px-6 text-[#A3AED0] font-bold text-sm tracking-wide text-right">ACTION</th>
+                  <th className="py-3.5 px-5 text-gray-400 font-bold text-xs tracking-wide uppercase">Product</th>
+                  <th className="py-3.5 px-5 text-gray-400 font-bold text-xs tracking-wide uppercase">Type / Origin</th>
+                  <th className="py-3.5 px-5 text-gray-400 font-bold text-xs tracking-wide uppercase">Stock</th>
+                  <th className="py-3.5 px-5 text-gray-400 font-bold text-xs tracking-wide uppercase">Unit / Batch (RWF)</th>
+                  <th className="py-3.5 px-5 text-gray-400 font-bold text-xs tracking-wide uppercase text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {products.length === 0 ? (
-                  <tr><td colSpan={6} className="py-8 px-6 text-center text-[#A3AED0]">No products found in inventory.</td></tr>
-                ) : (
-                  products.map((p) => (
-                    <tr key={p.id} className="border-b border-[#E9EDF7] hover:bg-[#F4F7FE]/50 transition-colors">
-                      <td className="py-4 px-6">
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={5} className="py-12 px-5 text-center text-gray-400">No products found.</td></tr>
+                ) : filtered.map(p => {
+                  const low = p.stock_units <= p.min_stock_threshold;
+                  const out = p.stock_units === 0;
+                  return (
+                    <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+                      <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-[#E5ECF6] flex items-center justify-center text-[#4318FF]">
-                             <Package size={20} />
-                          </div>
-                          <span className="font-bold text-[#2B3674]">{p.name}</span>
+                          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 shrink-0"><Package size={18} /></div>
+                          <span className="font-bold text-gray-900">{p.name}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <p className="font-medium text-[#2B3674]">{p.honey_type}</p>
-                        <p className="text-sm text-[#A3AED0]">{p.origin || 'N/A'}</p>
+                      <td className="py-4 px-5">
+                        <p className="font-medium text-gray-800">{p.honey_type}</p>
+                        <p className="text-sm text-gray-400">{p.origin || '—'}</p>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`font-bold ${p.stock_units < p.min_stock_threshold ? 'text-[#EE5D50] bg-[#EE5D50]/10 px-3 py-1 rounded-lg' : 'text-[#01B574] bg-[#01B574]/10 px-3 py-1 rounded-lg'}`}>
-                          {p.stock_units} Units
+                      <td className="py-4 px-5">
+                        <span className={`font-bold px-3 py-1 rounded-lg text-sm ${out ? 'text-red-600 bg-red-50' : low ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
+                          {p.stock_units} units
                         </span>
                       </td>
-                      <td className="py-4 px-6 font-bold text-[#2B3674]">
-                        {p.price_per_unit.toLocaleString()}
+                      <td className="py-4 px-5">
+                        <p className="font-bold text-gray-900">{p.price_per_unit.toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">{p.price_per_batch.toLocaleString()} / batch of {p.batch_size}</p>
                       </td>
-                      <td className="py-4 px-6">
-                        {p.is_active ? 
-                          <span className="text-[#01B574] font-medium text-sm">Active</span> : 
-                          <span className="text-[#EE5D50] font-medium text-sm">Inactive</span>
-                        }
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button 
-                          onClick={() => handleRestock(p)}
-                          className="bg-[#1E2336] hover:bg-[#111421] text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
-                        >
-                          Restock
+                      <td className="py-4 px-5 text-right">
+                        <button onClick={() => setRestockTarget(p)}
+                          className="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg font-bold text-sm transition inline-flex items-center gap-1.5">
+                          <PackagePlus size={15} /> Restock
                         </button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
+      </div>
 
-        {/* Add Product Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-[#1E2336]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[20px] shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="p-6 border-b border-[#E9EDF7] bg-[#F4F7FE]">
-                <h3 className="text-xl font-bold text-[#2B3674]">Add New Honey Product</h3>
-              </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                <div className="grid grid-cols-2 gap-5">
-                  <div className="col-span-2">
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Product Name</label>
-                    <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Type (e.g. Raw)</label>
-                    <input type="text" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.honey_type} onChange={(e) => setFormData({...formData, honey_type: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Origin</label>
-                    <input type="text" className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.origin} onChange={(e) => setFormData({...formData, origin: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Price / Unit (RWF)</label>
-                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.price_per_unit || ''} onChange={(e) => setFormData({...formData, price_per_unit: Number(e.target.value)})} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Low Stock Alert Level</label>
-                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.min_stock_threshold || ''} onChange={(e) => setFormData({...formData, min_stock_threshold: Number(e.target.value)})} />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-bold text-[#2B3674] mb-2">Initial Stock Amount</label>
-                    <input type="number" required className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-[#2B3674] focus:outline-none focus:ring-2 focus:ring-[#4318FF]/50" value={formData.stock_units || ''} onChange={(e) => setFormData({...formData, stock_units: Number(e.target.value)})} />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 mt-8 pt-4">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 rounded-xl font-bold text-[#A3AED0] hover:bg-[#F4F7FE] transition-colors">Cancel</button>
-                  <button type="submit" className="bg-[#4318FF] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#3211b8] transition-colors shadow-lg shadow-[#4318FF]/20">Save Product</button>
-                </div>
-              </form>
+      {/* Add product modal */}
+      {showAdd && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Package size={18} className="text-amber-500" /> Add New Product</h3>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
+            <form onSubmit={handleSubmit} className="p-5 grid grid-cols-2 gap-4">
+              <div className="col-span-2">{field('Product Name', <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="e.g. Acacia Raw Honey 500g" />)}</div>
+              {field('Honey Type', <input required value={formData.honey_type} onChange={e => setFormData({ ...formData, honey_type: e.target.value })} className={inputCls} placeholder="e.g. Raw" />)}
+              {field('Origin', <input value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} className={inputCls} placeholder="e.g. Nyungwe" />)}
+              {field('Price / Unit (RWF)', <input type="number" min="0" required value={formData.price_per_unit || ''} onChange={e => setFormData({ ...formData, price_per_unit: Number(e.target.value) })} className={inputCls} />)}
+              {field('Units / Batch', <input type="number" min="1" required value={formData.batch_size || ''} onChange={e => setFormData({ ...formData, batch_size: Number(e.target.value) })} className={inputCls} />)}
+              {field('Price / Batch (RWF)', <input type="number" min="0" value={formData.price_per_batch || ''} onChange={e => setFormData({ ...formData, price_per_batch: Number(e.target.value) })} className={inputCls} placeholder="auto" />)}
+              {field('Low-stock Alert At', <input type="number" min="0" required value={formData.min_stock_threshold || ''} onChange={e => setFormData({ ...formData, min_stock_threshold: Number(e.target.value) })} className={inputCls} />)}
+              <div className="col-span-2">{field('Initial Stock (units)', <input type="number" min="0" required value={formData.stock_units || ''} onChange={e => setFormData({ ...formData, stock_units: Number(e.target.value) })} className={inputCls} />)}</div>
+              <div className="col-span-2 flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAdd(false)} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50">Cancel</button>
+                <button type="submit" className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold">Save Product</button>
+              </div>
+            </form>
           </div>
-        )}
-            </main>
-  </div>
+        </div>
+      )}
+
+      {/* Restock modal */}
+      {restockTarget && (
+        <RestockModal product={restockTarget} onClose={() => setRestockTarget(null)}
+          onDone={() => { setRestockTarget(null); fetchProducts(); showToast('success', 'Stock updated successfully.'); }}
+          onError={(m) => showToast('error', m)} />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 right-4 z-[60] px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-2.5 text-sm font-bold text-white ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+          {toast.type === 'success' ? <PackagePlus size={18} /> : <AlertTriangle size={18} />}
+          {toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatTile({ label, value, tint }: { label: string; value: any; tint: string }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2.5 ${tint}`}><Package size={16} /></div>
+      <p className="text-xs text-gray-500 font-bold uppercase tracking-wide">{label}</p>
+      <p className="text-xl font-black text-gray-900 mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function RestockModal({ product, onClose, onDone, onError }: { product: Product; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
+  const [qty, setQty] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qty || qty <= 0) { onError('Enter a quantity greater than zero.'); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/manager/products/${product.id}/restock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: qty }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Restock failed');
+      }
+      onDone();
+    } catch (err: any) {
+      onError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><PackagePlus size={18} className="text-amber-500" /> Restock</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <form onSubmit={submit} className="p-5 space-y-4">
+          <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+            <p className="font-bold text-gray-900">{product.name}</p>
+            <p className="text-xs text-gray-500">Current stock: <span className="font-bold">{product.stock_units}</span> units</p>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-600 mb-1.5">Units to add</label>
+            <input type="number" min="1" autoFocus value={qty || ''} onChange={e => setQty(Number(e.target.value))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400" placeholder="0" />
+            {qty > 0 && <p className="text-xs text-emerald-600 font-medium mt-1.5">New stock will be {(product.stock_units + qty).toLocaleString()} units</p>}
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-gray-200 text-gray-900 font-bold">{saving ? 'Saving…' : 'Confirm'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
