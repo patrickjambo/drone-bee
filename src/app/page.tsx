@@ -17,6 +17,13 @@ const heroSlides = [
   { src: "/logo.png", fit: "contain", label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" },
 ];
 
+const heroAvatars = [
+  { initials: "AU", color: "bg-amber-500" },
+  { initials: "JP", color: "bg-emerald-500" },
+  { initials: "SK", color: "bg-rose-500" },
+  { initials: "MN", color: "bg-sky-500" },
+];
+
 const products = [
   { img: "/p1.jpg", name: "Classic Honey Jar", size: "500g · Glass Jar", desc: "Our signature raw, unfiltered honey — golden, thick and rich.", tag: "Bestseller", tagCls: "bg-amber-400 text-[#171B2C]" },
   { img: "/p2.jpg", name: "Family Honey Can", size: "2L · Jerrycan", desc: "Pure natural honey in a generous size for the whole household.", tag: "Best Value", tagCls: "bg-emerald-400 text-[#0c2b1e]" },
@@ -160,23 +167,42 @@ export default function Home() {
         }} />
         <div className="absolute -top-32 -right-24 w-[38rem] h-[38rem] bg-amber-500/20 rounded-full blur-[120px]" />
         <div className="absolute -bottom-40 -left-24 w-[34rem] h-[34rem] bg-orange-600/10 rounded-full blur-[120px]" />
+        {/* film grain + vignette for depth */}
+        <div className="absolute inset-0 opacity-[0.18] mix-blend-overlay pointer-events-none" style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 60% 40%, transparent 45%, rgba(10,13,22,0.85) 100%)" }} />
 
         <div className="relative z-10 max-w-[1500px] mx-auto px-6 sm:px-10 w-full grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           {/* Left: copy */}
           <div className="text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm font-semibold text-amber-300 backdrop-blur-sm">
-              <Sparkles size={15} /> 100% Natural · Harvested in Rwanda
+            <span className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm font-semibold text-amber-300 backdrop-blur-sm shadow-lg shadow-black/20">
+              <Sparkles size={15} className="animate-pulse" /> 100% Natural · Harvested in Rwanda
             </span>
-            <h1 className="mt-6 text-[2.75rem] sm:text-6xl xl:text-[64px] font-black leading-[1.05] tracking-tight">
+            <h1 style={{ fontFamily: "var(--font-display)" }} className="mt-7 text-[3.25rem] sm:text-[4.5rem] xl:text-[5.25rem] font-black leading-[0.95] tracking-tight">
               <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-[#FDF9ED] to-[#E5B53D]">Pure Rwandan</span>{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#E8C265] to-amber-500">Honey</span>
+              <span className="relative inline-block">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#E8C265] to-amber-500">Honey</span>
+                <svg className="absolute -bottom-1.5 left-0 w-full" height="16" viewBox="0 0 200 16" preserveAspectRatio="none" fill="none">
+                  <path d="M3 10 C 55 3, 150 3, 197 8" stroke="#E8C265" strokeWidth="4.5" strokeLinecap="round" />
+                </svg>
+              </span>
             </h1>
-            <p className="mt-6 text-lg sm:text-xl text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
+            <p className="mt-7 text-lg sm:text-xl text-gray-300/90 leading-relaxed max-w-xl mx-auto lg:mx-0">
               From our hives to your table — raw, traceable honey from the heart of Rwanda. Experience the purest sweetness nature has to offer.
             </p>
 
-            <div className="mt-9 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link href="/shop" className="group inline-flex items-center justify-center gap-2.5 bg-[#E8C265] hover:bg-amber-300 text-[#171B2C] px-7 py-4 rounded-2xl font-black text-base shadow-xl shadow-amber-500/25 transition">
+            {/* feature checklist */}
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2.5 justify-center lg:justify-start">
+              {["Raw & unfiltered", "Cold-extracted", "Free Kigali delivery"].map((f) => (
+                <span key={f} className="flex items-center gap-2 text-gray-200 text-sm font-medium">
+                  <CheckCircle2 size={17} className="text-amber-400 shrink-0" /> {f}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Link href="/shop" className="group inline-flex items-center justify-center gap-2.5 bg-[#E8C265] hover:bg-amber-300 text-[#171B2C] px-7 py-4 rounded-2xl font-black text-base shadow-xl shadow-amber-500/25 hover:shadow-amber-400/40 hover:-translate-y-0.5 transition-all">
                 <ShoppingBag size={20} /> Shop Our Honey
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -185,15 +211,20 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="mt-10 flex items-center gap-6 justify-center lg:justify-start">
-              <div className="flex items-center gap-1.5">
-                <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} size={18} className="text-amber-400" fill="currentColor" />)}</div>
-                <span className="text-sm font-semibold text-gray-300 ml-1">Top rated in Rwanda</span>
+            {/* social proof */}
+            <div className="mt-10 flex items-center gap-4 justify-center lg:justify-start">
+              <div className="flex -space-x-3">
+                {heroAvatars.map((a) => (
+                  <div key={a.initials} className={`w-11 h-11 rounded-full ${a.color} text-white text-xs font-black flex items-center justify-center ring-2 ring-[#0F1320]`}>{a.initials}</div>
+                ))}
+                <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur text-white text-[11px] font-black flex items-center justify-center ring-2 ring-[#0F1320]">3k+</div>
               </div>
-              <div className="h-8 w-px bg-white/15 hidden sm:block" />
-              <div className="hidden sm:flex items-center gap-2 text-gray-300">
-                <BadgeCheck size={20} className="text-emerald-400" />
-                <span className="text-sm font-semibold">Fully Traceable</span>
+              <div className="text-left">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => <Star key={i} size={15} className="text-amber-400" fill="currentColor" />)}
+                  <span className="ml-1.5 text-sm font-black text-white">4.9</span>
+                </div>
+                <p className="text-sm text-gray-400">Loved by 3,500+ customers</p>
               </div>
             </div>
           </div>
