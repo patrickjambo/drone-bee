@@ -327,8 +327,8 @@ export default function ManagerDashboard() {
   const orderPanel = (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h3 className="font-bold text-gray-900 flex items-center gap-2">
-          <ShoppingCart size={18} className="text-amber-500" /> Current Order
+        <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+          <ShoppingCart size={20} className="text-amber-500" /> Current Order
           {cartCount > 0 && <span className="ml-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">{cartCount}</span>}
         </h3>
         <div className="flex items-center gap-3">
@@ -343,7 +343,7 @@ export default function ManagerDashboard() {
 
       {/* Customer */}
       <div className="px-5 pt-4">
-        <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Customer</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Customer</label>
         <div className="relative mt-1.5">
           <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <select value={customerName} onChange={e => setCustomerName(e.target.value)}
@@ -392,7 +392,7 @@ export default function ManagerDashboard() {
         {/* Discount */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1"><Percent size={12} /> Discount</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1"><Percent size={12} /> Discount</label>
             <div className="flex gap-1">
               {DISCOUNTS.map(d => (
                 <button key={d} onClick={() => applyDiscountPct(d)}
@@ -409,7 +409,7 @@ export default function ManagerDashboard() {
 
         {/* Payment */}
         <div>
-          <label className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Payment</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Payment</label>
           <div className="grid grid-cols-3 gap-2 mt-1.5">
             {PAYMENTS.map(p => {
               const Icon = p.icon; const active = paymentMethod === p.id;
@@ -444,9 +444,9 @@ export default function ManagerDashboard() {
         <div className="space-y-1">
           <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>RWF {subtotal.toLocaleString()}</span></div>
           {discountValue > 0 && <div className="flex justify-between text-sm text-amber-600 font-medium"><span>Discount</span><span>− RWF {discountValue.toLocaleString()}</span></div>}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-sm font-medium text-gray-600">Total</span>
-            <span className="text-2xl font-black text-gray-900">RWF {total.toLocaleString()}</span>
+          <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-100">
+            <span className="text-base font-bold text-gray-700">Total</span>
+            <span className="text-[26px] font-black text-gray-900">RWF {total.toLocaleString()}</span>
           </div>
         </div>
 
@@ -474,39 +474,46 @@ export default function ManagerDashboard() {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
 
-      {/* Greeting + quick actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">Hi {userName} <Sparkles size={20} className="text-amber-400" /></h1>
-          <p className="text-gray-500 text-sm mt-0.5">Your point-of-sale is ready. Sell faster, track everything live.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {parked.length > 0 && (
-            <div className="relative">
-              <button onClick={() => setShowParked(v => !v)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50">
-                <Pause size={16} /> Parked <span className="bg-amber-500 text-gray-900 text-[11px] px-1.5 rounded-full">{parked.length}</span>
-              </button>
-              {showParked && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                  <p className="px-4 py-3 text-xs font-bold text-gray-400 uppercase border-b border-gray-100">Parked orders</p>
-                  <div className="max-h-72 overflow-y-auto">
-                    {parked.map(p => (
-                      <button key={p.id} onClick={() => resumeSale(p.id)} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-gray-800">{p.customer}</p>
-                          <p className="text-[11px] text-gray-400">{p.items.length} item(s) · {new Date(p.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                        </div>
-                        <span className="text-sm font-black text-gray-900 flex items-center gap-1"><RotateCcw size={13} className="text-amber-500" /> {p.total.toLocaleString()}</span>
-                      </button>
-                    ))}
+      {/* Hero greeting */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#171B2C] via-[#242B47] to-[#171B2C] p-6 sm:p-8 mb-6 shadow-[0_12px_40px_rgba(23,27,44,0.25)]">
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='56' height='100' viewBox='0 0 56 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 0l28 16v33L28 65 0 49V16z' fill='none' stroke='%23E8C265' stroke-width='1.5'/%3E%3C/svg%3E\")",
+          backgroundSize: '64px',
+        }} />
+        <div className="absolute -top-16 -right-10 w-56 h-56 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black text-white flex items-center gap-3 tracking-tight">Hi {userName} <Sparkles size={26} className="text-amber-400" /></h1>
+            <p className="text-gray-300 text-[15px] sm:text-base mt-2 font-medium">Your point-of-sale is ready. Sell faster, track everything live.</p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {parked.length > 0 && (
+              <div className="relative">
+                <button onClick={() => setShowParked(v => !v)}
+                  className="flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm font-bold text-white transition backdrop-blur-sm">
+                  <Pause size={16} /> Parked <span className="bg-amber-400 text-[#171B2C] text-[11px] px-1.5 py-0.5 rounded-full font-black">{parked.length}</span>
+                </button>
+                {showParked && (
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                    <p className="px-4 py-3 text-xs font-bold text-gray-500 uppercase border-b border-gray-100">Parked orders</p>
+                    <div className="max-h-72 overflow-y-auto">
+                      {parked.map(p => (
+                        <button key={p.id} onClick={() => resumeSale(p.id)} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">{p.customer}</p>
+                            <p className="text-[11px] text-gray-500">{p.items.length} item(s) · {new Date(p.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
+                          <span className="text-sm font-black text-gray-900 flex items-center gap-1"><RotateCcw size={13} className="text-amber-500" /> {p.total.toLocaleString()}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-          <button onClick={() => setShowAddProduct(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"><Plus size={16} /> Add Product</button>
-          <button onClick={() => router.push('/manager/reconcile')} className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"><Clock size={16} /> EOD Count</button>
+                )}
+              </div>
+            )}
+            <button onClick={() => setShowAddProduct(true)} className="flex items-center gap-2 px-5 py-3 bg-amber-400 hover:bg-amber-300 rounded-xl text-sm font-black text-[#171B2C] shadow-lg shadow-amber-500/20 transition"><Plus size={18} /> Add Product</button>
+            <button onClick={() => router.push('/manager/reconcile')} className="hidden sm:flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm font-bold text-white transition backdrop-blur-sm"><Clock size={16} /> EOD Count</button>
+          </div>
         </div>
       </div>
 
@@ -522,28 +529,28 @@ export default function ManagerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Catalog */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="p-4 sm:p-5 border-b border-gray-100">
+          <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-gray-100">
+            <div className="p-5 border-b border-gray-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2"><Box size={18} className="text-amber-500" /> Products</h3>
+                <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2"><Box size={20} className="text-amber-500" /> Products</h3>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400 font-medium">{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''}</span>
-                  <div className="flex bg-gray-100 rounded-lg p-0.5">
-                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400'}`}><LayoutGrid size={15} /></button>
-                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400'}`}><List size={15} /></button>
+                  <span className="text-sm text-gray-500 font-semibold">{filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''}</span>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition ${viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}><LayoutGrid size={16} /></button>
+                    <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition ${viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}><List size={16} /></button>
                   </div>
                 </div>
               </div>
-              <div className="relative mb-3">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <div className="relative mb-3.5">
+                <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input ref={searchRef} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={onSearchEnter}
                   placeholder="Search products…  (press / to focus, Enter to add)"
-                  className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400" />
               </div>
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                 {honeyTypes.map(t => (
                   <button key={t} onClick={() => setTypeFilter(t)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${typeFilter === t ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{t}</button>
+                    className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition ${typeFilter === t ? 'bg-gray-900 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t}</button>
                 ))}
               </div>
             </div>
@@ -562,21 +569,21 @@ export default function ManagerDashboard() {
                   {filteredProducts.map(p => {
                     const badge = stockBadge(p); const soldOut = p.stock_units === 0; const hasBatch = p.batch_size > 1 && p.price_per_batch > 0;
                     return (
-                      <div key={p.id} className={`group rounded-xl border border-gray-100 overflow-hidden transition ${soldOut ? 'opacity-60' : 'hover:shadow-md hover:border-amber-200'}`}>
-                        <div className="h-20 bg-gradient-to-br from-amber-100 to-amber-50 relative flex items-center justify-center">
-                          {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package size={28} className="text-amber-400" />}
-                          <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                      <div key={p.id} className={`group rounded-2xl border border-gray-200 bg-white overflow-hidden transition-all duration-200 ${soldOut ? 'opacity-60' : 'hover:shadow-[0_10px_30px_rgba(16,24,40,0.10)] hover:border-amber-300 hover:-translate-y-0.5'}`}>
+                        <div className="h-24 bg-gradient-to-br from-amber-300 via-amber-200 to-amber-100 relative flex items-center justify-center">
+                          {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package size={32} className="text-amber-600/70" />}
+                          <span className={`absolute top-2.5 left-2.5 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm ${badge.cls}`}>{badge.label}</span>
                         </div>
-                        <div className="p-3">
-                          <p className="font-bold text-sm text-gray-900 truncate">{p.name}</p>
-                          <p className="text-[11px] text-gray-500 truncate mb-2">{p.honey_type}{p.origin ? ` · ${p.origin}` : ''}</p>
-                          <div className="flex items-baseline justify-between mb-2.5">
-                            <span className="text-base font-black text-gray-900">RWF {p.price_per_unit.toLocaleString()}</span>
-                            <span className="text-[10px] text-gray-400">/unit</span>
+                        <div className="p-3.5">
+                          <p className="font-bold text-[15px] text-gray-900 truncate">{p.name}</p>
+                          <p className="text-xs text-gray-500 truncate mb-2.5">{p.honey_type}{p.origin ? ` · ${p.origin}` : ''}</p>
+                          <div className="flex items-baseline justify-between mb-3">
+                            <span className="text-lg font-black text-gray-900">RWF {p.price_per_unit.toLocaleString()}</span>
+                            <span className="text-xs text-gray-400 font-medium">/unit</span>
                           </div>
-                          <div className="flex gap-1.5">
-                            <button disabled={soldOut} onClick={() => addToCart(p, 'UNIT')} className="flex-1 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-gray-100 disabled:text-gray-400 text-gray-900 text-xs font-bold flex items-center justify-center gap-1 transition"><Plus size={13} /> Unit</button>
-                            {hasBatch && <button disabled={soldOut} onClick={() => addToCart(p, 'BATCH')} title={`Batch of ${p.batch_size} · RWF ${p.price_per_batch.toLocaleString()}`} className="flex-1 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 disabled:bg-gray-100 disabled:text-gray-400 text-indigo-600 text-xs font-bold flex items-center justify-center gap-1 transition"><Layers size={13} /> Batch</button>}
+                          <div className="flex gap-2">
+                            <button disabled={soldOut} onClick={() => addToCart(p, 'UNIT')} className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:bg-gray-100 disabled:text-gray-400 text-white text-sm font-bold flex items-center justify-center gap-1.5 transition shadow-sm shadow-amber-500/20"><Plus size={15} /> Unit</button>
+                            {hasBatch && <button disabled={soldOut} onClick={() => addToCart(p, 'BATCH')} title={`Batch of ${p.batch_size} · RWF ${p.price_per_batch.toLocaleString()}`} className="flex-1 py-2.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 disabled:bg-gray-100 disabled:text-gray-400 text-indigo-700 text-sm font-bold flex items-center justify-center gap-1.5 transition"><Layers size={15} /> Batch</button>}
                           </div>
                         </div>
                       </div>
@@ -611,15 +618,15 @@ export default function ManagerDashboard() {
 
         {/* Order panel (desktop) */}
         <div className="hidden lg:block">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 lg:sticky lg:top-24 overflow-hidden">{orderPanel}</div>
+          <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-gray-100 lg:sticky lg:top-24 overflow-hidden">{orderPanel}</div>
         </div>
       </div>
 
       {/* Analytics row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2"><TrendingUp size={18} className="text-amber-500" /> Sales Over Time</h3>
+            <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2"><TrendingUp size={20} className="text-amber-500" /> Sales Over Time</h3>
             <span className="text-xs text-gray-400">Today</span>
           </div>
           <div className="relative h-40 w-full">
@@ -643,8 +650,8 @@ export default function ManagerDashboard() {
         </div>
 
         {/* Top sellers today */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-4"><Crown size={16} className="text-amber-500" /> Top Sellers Today</h3>
+        <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-gray-100 p-5">
+          <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2 mb-4"><Crown size={20} className="text-amber-500" /> Top Sellers Today</h3>
           {topSellers.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">No sales yet today.</p>
           ) : (
@@ -667,8 +674,8 @@ export default function ManagerDashboard() {
       </div>
 
       {/* Recent transactions full width */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-6">
-        <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-4"><Clock size={16} /> Recent Transactions</h3>
+      <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-gray-100 p-5 mt-6">
+        <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2 mb-4"><Clock size={20} className="text-amber-500" /> Recent Transactions</h3>
         {recentTx.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-6">No sales yet today.</p>
         ) : (
@@ -747,16 +754,19 @@ export default function ManagerDashboard() {
 // ---- Sub components -------------------------------------------------------
 function KpiCard({ icon: Icon, tint, label, value, suffix }: { icon: any; tint: string; label: string; value: any; suffix?: string }) {
   const tints: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600', green: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600', gray: 'bg-gray-100 text-gray-500',
+    blue: 'from-blue-500 to-blue-600 shadow-blue-500/30',
+    green: 'from-emerald-500 to-emerald-600 shadow-emerald-500/30',
+    amber: 'from-amber-400 to-amber-500 shadow-amber-500/30',
+    red: 'from-red-500 to-rose-600 shadow-rose-500/30',
+    gray: 'from-slate-400 to-slate-500 shadow-slate-500/30',
   };
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${tints[tint]}`}><Icon size={18} /></div>
-      <p className="text-[11px] sm:text-xs text-gray-500 font-bold uppercase tracking-wide">{label}</p>
-      <div className="flex items-end gap-1.5 mt-0.5">
-        <span className="text-lg sm:text-2xl font-black text-gray-900 leading-none">{value}</span>
-        {suffix && <span className="text-[11px] text-gray-400 mb-0.5">{suffix}</span>}
+    <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_4px_24px_rgba(16,24,40,0.06)] hover:shadow-[0_10px_30px_rgba(16,24,40,0.10)] hover:-translate-y-0.5 transition-all duration-200">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br text-white shadow-lg ${tints[tint]}`}><Icon size={22} /></div>
+      <p className="text-[13px] text-gray-500 font-bold uppercase tracking-wider">{label}</p>
+      <div className="flex items-end gap-2 mt-1">
+        <span className="text-[26px] sm:text-3xl font-black text-gray-900 leading-none">{value}</span>
+        {suffix && <span className="text-xs text-gray-400 font-semibold mb-1">{suffix}</span>}
       </div>
     </div>
   );
