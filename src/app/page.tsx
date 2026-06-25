@@ -21,7 +21,7 @@ const images = [
   "https://images.unsplash.com/photo-1471943311424-646960669fbc?auto=format&fit=crop&q=80&w=2070",
   "https://images.unsplash.com/photo-1536788567643-8c2368376526?auto=format&fit=crop&q=80&w=2070",
   "/logo.png",
-  "/suko.png"
+  "/suko22.png"
 ];
 
 export default function Home() {
