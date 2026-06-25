@@ -8,7 +8,13 @@ import {
   Truck, Sparkles, Menu, X,
 } from "lucide-react";
 
-const heroProducts = ["/p1.png", "/p2.png", "/p3.png"];
+const heroProducts = [
+  { src: "/p1.png", fit: "cover" },
+  { src: "/p2.png", fit: "cover" },
+  { src: "/p3.png", fit: "cover" },
+  { src: "/suko22.png", fit: "cover" },
+  { src: "/logo.png", fit: "contain" },
+];
 
 const products = [
   { img: "/p1.png", name: "Classic Honey Jar", size: "500g · Glass Jar", desc: "Our signature raw, unfiltered honey — golden, thick and rich.", tag: "Bestseller", tagCls: "bg-amber-400 text-[#171B2C]" },
@@ -79,8 +85,8 @@ export default function Home() {
             <span className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm font-semibold text-amber-300 backdrop-blur-sm">
               <Sparkles size={15} /> 100% Natural · Harvested in Rwanda
             </span>
-            <h1 className="mt-6 text-5xl sm:text-6xl xl:text-7xl font-black leading-[1.05] tracking-tight">
-              <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-[#FDF9ED] to-[#E5B53D]">Pure Rwandan</span><br />
+            <h1 className="mt-6 text-[2.75rem] sm:text-6xl xl:text-[64px] font-black leading-[1.05] tracking-tight">
+              <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-[#FDF9ED] to-[#E5B53D]">Pure Rwandan</span>{" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#E8C265] to-amber-500">Honey</span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
@@ -111,31 +117,34 @@ export default function Home() {
           </div>
 
           {/* Right: product showcase */}
-          <div className="relative flex items-center justify-center">
-            <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/10 blur-2xl" />
-            <div className="relative w-[18rem] sm:w-[24rem] aspect-square rounded-[2.5rem] p-3 bg-white/5 border border-white/15 backdrop-blur-md shadow-2xl">
-              {heroProducts.map((src, i) => (
-                <img key={src} src={src} alt="Drone Bee honey"
-                  className={`absolute inset-3 w-[calc(100%-1.5rem)] h-[calc(100%-1.5rem)] object-cover rounded-[2rem] transition-opacity duration-1000 ${i === current ? "opacity-100" : "opacity-0"}`} />
-              ))}
-              {/* floating badge */}
-              <div className="absolute -bottom-5 -left-5 bg-white text-[#171B2C] rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-3">
+          <div className="relative flex items-center justify-center mt-8 lg:mt-0">
+            <div className="absolute inset-0 m-auto w-[85%] h-[85%] rounded-full bg-gradient-to-br from-amber-400/30 to-orange-500/10 blur-3xl pointer-events-none" />
+            <div className="relative w-full max-w-[30rem] lg:max-w-[34rem] aspect-[4/5]">
+              <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden border border-white/15 bg-gradient-to-br from-amber-200 via-amber-100 to-orange-50 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
+                {heroProducts.map((slide, i) => (
+                  <img key={slide.src} src={slide.src} alt="Drone Bee honey" loading="eager"
+                    className={`absolute inset-0 w-full h-full transition-opacity duration-[1200ms] ease-in-out ${slide.fit === "contain" ? "object-contain p-10" : "object-cover"} ${i === current ? "opacity-100" : "opacity-0"}`} />
+                ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+              </div>
+              {/* floating badges */}
+              <div className="absolute -bottom-5 -left-3 sm:-left-6 bg-white text-[#171B2C] rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center"><Leaf size={20} className="text-amber-600" /></div>
                 <div>
                   <p className="text-xs text-gray-500 font-semibold leading-none">Quality</p>
                   <p className="text-sm font-black leading-tight">100% Pure & Raw</p>
                 </div>
               </div>
-              <div className="absolute -top-4 -right-4 bg-[#171B2C] border border-white/10 rounded-2xl px-4 py-2.5 shadow-2xl">
+              <div className="absolute -top-4 -right-3 sm:-right-5 bg-[#171B2C] border border-white/10 rounded-2xl px-4 py-2.5 shadow-2xl">
                 <p className="text-[11px] text-gray-400 font-semibold leading-none">Made in</p>
                 <p className="text-sm font-black text-[#E8C265]">🇷🇼 Rwanda</p>
               </div>
-            </div>
-            {/* dots */}
-            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
-              {heroProducts.map((_, i) => (
-                <button key={i} onClick={() => setCurrent(i)} className={`h-2 rounded-full transition-all ${i === current ? "w-7 bg-amber-400" : "w-2 bg-white/30"}`} />
-              ))}
+              {/* dots */}
+              <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 flex gap-2">
+                {heroProducts.map((_, i) => (
+                  <button key={i} onClick={() => setCurrent(i)} aria-label={`Show product ${i + 1}`} className={`h-2 rounded-full transition-all ${i === current ? "w-7 bg-amber-400" : "w-2 bg-white/30"}`} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
