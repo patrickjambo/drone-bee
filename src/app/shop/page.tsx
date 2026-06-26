@@ -8,6 +8,14 @@ import {
 } from "lucide-react";
 
 const WHATSAPP = "250783314404"; // business order line
+const FALLBACK_IMAGES = ["/p1.jpg", "/p2.jpg", "/p3.jpg"];
+
+// Always return a photo: the product's own image, or a stable honey fallback.
+function imgFor(p: { id: string; image_url?: string | null }) {
+  if (p.image_url) return p.image_url;
+  const n = p.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return FALLBACK_IMAGES[n % FALLBACK_IMAGES.length];
+}
 
 type Product = {
   id: string;
@@ -126,7 +134,7 @@ export default function ShopHub() {
               {cartItems.map((item) => (
                 <div key={item.product.id} className="flex gap-3 items-center bg-gray-50 p-3 rounded-2xl border border-gray-100">
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-amber-50 flex items-center justify-center shrink-0">
-                    {item.product.image_url ? <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" /> : <Package size={24} className="text-amber-400" />}
+                    <img src={imgFor(item.product)} alt={item.product.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm truncate">{item.product.name}</h4>
@@ -262,9 +270,7 @@ export default function ShopHub() {
               return (
                 <div key={p.id} className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-[0_10px_40px_rgba(23,27,44,0.06)] hover:shadow-[0_22px_55px_rgba(229,181,61,0.22)] hover:-translate-y-2 transition-all duration-500 flex flex-col">
                   <div className="relative h-64 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-50">
-                    {p.image_url
-                      ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                      : <div className="w-full h-full flex items-center justify-center"><Package size={56} className="text-amber-400/70" /></div>}
+                    <img src={imgFor(p)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <span className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide text-[#171B2C] shadow-sm">{p.honey_type}</span>
                     {soldOut
                       ? <span className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black shadow">Sold out</span>

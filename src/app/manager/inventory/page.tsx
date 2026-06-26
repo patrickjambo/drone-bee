@@ -26,7 +26,7 @@ export default function ProductsPage() {
   const [restockTarget, setRestockTarget] = useState<Product | null>(null);
 
   const [formData, setFormData] = useState({
-    name: '', honey_type: '', origin: '', batch_size: 12,
+    name: '', honey_type: '', origin: '', image_url: '', batch_size: 12,
     price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5,
   });
 
@@ -76,7 +76,7 @@ export default function ProductsPage() {
       });
       if (res.ok) {
         setShowAdd(false);
-        setFormData({ name: '', honey_type: '', origin: '', batch_size: 12, price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5 });
+        setFormData({ name: '', honey_type: '', origin: '', image_url: '', batch_size: 12, price_per_batch: 0, price_per_unit: 0, stock_units: 0, min_stock_threshold: 5 });
         fetchProducts();
         showToast('success', 'Product added to inventory.');
       } else {
@@ -197,6 +197,7 @@ export default function ProductsPage() {
               <div className="col-span-2">{field('Product Name', <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="e.g. Acacia Raw Honey 500g" />)}</div>
               {field('Honey Type', <input required value={formData.honey_type} onChange={e => setFormData({ ...formData, honey_type: e.target.value })} className={inputCls} placeholder="e.g. Raw" />)}
               {field('Origin', <input value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} className={inputCls} placeholder="e.g. Nyungwe" />)}
+              <div className="col-span-2">{field('Image URL (optional)', <input value={formData.image_url} onChange={e => setFormData({ ...formData, image_url: e.target.value })} className={inputCls} placeholder="https://… product photo (shows in Shop)" />)}</div>
               {field('Price / Unit (RWF)', <input type="number" min="0" required value={formData.price_per_unit || ''} onChange={e => setFormData({ ...formData, price_per_unit: Number(e.target.value) })} className={inputCls} />)}
               {field('Units / Batch', <input type="number" min="1" required value={formData.batch_size || ''} onChange={e => setFormData({ ...formData, batch_size: Number(e.target.value) })} className={inputCls} />)}
               {field('Price / Batch (RWF)', <input type="number" min="0" value={formData.price_per_batch || ''} onChange={e => setFormData({ ...formData, price_per_batch: Number(e.target.value) })} className={inputCls} placeholder="auto" />)}
