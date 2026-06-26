@@ -39,13 +39,14 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, honey_type, origin, batch_size, price_per_batch, price_per_unit, stock_units, min_stock_threshold } = body;
+    const { name, honey_type, origin, image_url, batch_size, price_per_batch, price_per_unit, stock_units, min_stock_threshold } = body;
 
     const newProduct = await prisma.product.create({
       data: {
         name,
         honey_type,
         origin,
+        image_url: image_url?.trim() || null,
         batch_size: parseInt(batch_size),
         price_per_batch: parseFloat(price_per_batch),
         price_per_unit: parseFloat(price_per_unit),

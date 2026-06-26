@@ -1,363 +1,247 @@
-
 'use client';
-import { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Package, 
-  BellRing, 
-  FileText, 
-  Settings, 
-  LogOut,
-  Hexagon,
-  Download,
-  Plus
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  Users, Package, BellRing, Download, Plus, Banknote, TrendingUp,
+  AlertTriangle, ShoppingCart, UserPlus, PackagePlus, ArrowUpRight, CheckCircle2, ShieldAlert,
 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({ totalRevenue: 0, unitsSold: 0, activeManagers: 0, unreadAlertsCount: 0 });
   const [sales, setSales] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Form states for quick agent
   const [agentName, setAgentName] = useState('');
   const [agentPass, setAgentPass] = useState('');
-
-  // Form states for quick restock
   const [selectedProduct, setSelectedProduct] = useState('');
-  
+  const [restockQty, setRestockQty] = useState(50);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
   useEffect(() => {
     fetchAllData();
-    const interval = setInterval(fetchAllData, 10000);
+    const interval = setInterval(fetchAllData, 12000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchAllData = async () => {
     try {
-      const [statsRes, salesRes, alertsRes, productsRes] = await Promise.all([
-        fetch('/api/admin/system'),
-        fetch('/api/admin/sales'),
-        fetch('/api/admin/alerts'),
-        fetch('/api/admin/products')
+      const [s, sa, al, pr] = await Promise.all([
+        fetch('/api/admin/system'), fetch('/api/admin/sales'), fetch('/api/admin/alerts'), fetch('/api/admin/products'),
       ]);
-
-      if (statsRes.ok) setStats(await statsRes.json());
-      if (salesRes.ok) setSales(await salesRes.json());
-      if (alertsRes.ok) setAlerts(await alertsRes.json());
-      if (productsRes.ok) setProducts(await productsRes.json());
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+      if (s.ok) setStats(await s.json());
+      if (sa.ok) setSales(await sa.json());
+      if (al.ok) setAlerts(await al.json());
+      if (pr.ok) setProducts(await pr.json());
+    } catch (e) { console.error(e); }
   };
+
+  const showToast = (type: 'success' | 'error', msg: string) => { setToast({ type, msg }); setTimeout(() => setToast(null), 3500); };
 
   const handleCreateAgent = async () => {
-    if (!agentName) {
-      alert("Please enter a username strictly.");
-      return;
-    }
+    if (!agentName.trim()) { showToast('error', 'Enter an agent username.'); return; }
     try {
       const res = await fetch('/api/admin/managers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: agentName,
-          password: agentPass || undefined, // Allow backend to generate or use this
-          full_name: agentName,
-          shift_start: '08:00',
-          shift_end: '17:00'
-        })
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: agentName.trim(), password: agentPass || undefined, full_name: agentName.trim(), shift_start: '08:00', shift_end: '17:00' }),
       });
-      if (res.ok) {
-        alert("Sales Agent Created Successfully!");
-        setAgentName('');
-        setAgentPass('');
-        fetchAllData();
-      } else {
-        alert("Failed to create agent. Username might be taken.");
-      }
-    } catch (e) {
-      alert("Error creating agent.");
-    }
+      if (res.ok) { const d = await res.json(); showToast('success', `Agent created${d.temporaryPassword ? ` · temp pass: ${d.temporaryPassword}` : ''}`); setAgentName(''); setAgentPass(''); fetchAllData(); }
+      else showToast('error', 'Failed — username may be taken.');
+    } catch { showToast('error', 'Error creating agent.'); }
   };
 
-  const handleRestockProduct = async () => {
-    if (!selectedProduct) {
-      alert("Please select a product first.");
-      return;
-    }
+  const handleRestock = async () => {
+    if (!selectedProduct) { showToast('error', 'Select a product first.'); return; }
     try {
       const res = await fetch(`/api/admin/products/${selectedProduct}/restock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: 100 })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: restockQty }),
       });
-      if (res.ok) {
-        alert("100 Stock added to product successfully!");
-        fetchAllData();
-      } else {
-        alert("Failed to restock product.");
-      }
-    } catch (e) {
-      alert("Error restocking product.");
-    }
+      if (res.ok) { showToast('success', `Added ${restockQty} units.`); fetchAllData(); }
+      else { const d = await res.json().catch(() => ({})); showToast('error', d.error || 'Failed to restock.'); }
+    } catch { showToast('error', 'Error restocking.'); }
   };
 
   const handleDownloadReport = () => {
-    // Generate simple CSV
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Time,Manager,Product,Qty,Total RWF\n";
-    sales.forEach(row => {
-      const time = new Date(row.created_at).toLocaleString();
-      const manager = row.manager?.full_name || 'Unknown';
-      const product = row.product?.name || 'Unknown';
-      csvContent += `"${time}","${manager}","${product}",${row.quantity},${row.total_amount}\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `daily-sales-report-${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link); // Required for FF
-    link.click();
-    document.body.removeChild(link); 
+    let csv = 'data:text/csv;charset=utf-8,Time,Manager,Product,Qty,Total RWF\n';
+    sales.forEach(r => { csv += `"${new Date(r.created_at).toLocaleString()}","${r.manager?.full_name || 'Unknown'}","${r.product?.name || 'Unknown'}",${r.quantity},${r.total_amount}\n`; });
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csv));
+    link.setAttribute('download', `sales-report-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
+  // Real hourly sales chart (today)
+  const chart = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const buckets = [0, 0, 0, 0, 0, 0, 0];
+    sales.filter(s => new Date(s.created_at) >= start).forEach(s => {
+      const h = new Date(s.created_at).getHours();
+      const b = h < 10 ? 0 : h < 12 ? 1 : h < 14 ? 2 : h < 16 ? 3 : h < 18 ? 4 : h < 20 ? 5 : 6;
+      buckets[b] += s.total_amount;
+    });
+    const max = Math.max(...buckets, 1);
+    return buckets.map(v => Math.round((v / max) * 100));
+  }, [sales]);
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric'
-  });
-
-  const rawHoneyCount = products.filter(p => (p.honey_type || '').toLowerCase().includes('raw')).length;
-  const accessoriesCount = products.filter(p => (p.honey_type || '').toLowerCase().includes('accessories') || (p.honey_type || '').toLowerCase().includes('drone')).length;
-  const totalStockInStore = products.reduce((acc, p) => acc + p.stock_units, 0);
+  const totalStock = products.reduce((a, p) => a + p.stock_units, 0);
+  const lowStock = products.filter(p => p.stock_units > 0 && p.stock_units <= p.min_stock_threshold);
+  const recent = sales.slice(0, 6);
 
   return (
-    <div className="h-full">
-      {/* Sidebar */}
-      
-
-      {/* Main Content */}
-      <div className="h-full w-full">
-        
-        <div className="h-full w-full">
-        {/* Header */}
-        <header className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Dashboard Overview</h1>
-            <p className="text-gray-500 font-medium">{currentDate}</p>
-          </div>
-        </header>
-
-        {/* Top Cards grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Earnings Card */}
-          <div className="bg-gradient-to-br from-[#1E2336] to-[#2B3674] rounded-[20px] p-6 shadow-sm relative overflow-hidden text-white">
-            <div className="relative z-10">
-              <p className="text-sm font-medium text-gray-500 mb-1">TODAY'S EARNINGS</p>
-              <h2 className="text-3xl font-bold mb-6">RWF {stats.totalRevenue.toLocaleString()}</h2>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">Total Sales: <span className="text-white font-medium">{stats.unitsSold}</span></p>
-                <p className="text-sm text-gray-500">Avg Per Sale: <span className="text-white font-medium">RWF {stats.unitsSold > 0 ? Math.round(stats.totalRevenue / stats.unitsSold).toLocaleString() : 0}</span></p>
-              </div>
-            </div>
-            {/* Abstract Background Graph */}
-            <svg className="absolute bottom-0 right-0 w-full h-[60%] opacity-20" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path d="M0,100 C20,80 40,90 60,40 C80,-10 100,60 100,60 L100,100 Z" fill="currentColor"/>
-            </svg>
-          </div>
-
-          {/* Active Agents */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7] relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="w-10 h-10 rounded-full bg-[#E5ECF6] flex items-center justify-center">
-                <Users className="text-amber-500 w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500 mb-1">ACTIVE AGENTS</p>
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">{stats.activeManagers}</h2>
-            <div className="flex items-center text-sm font-medium text-[#01B574]">
-              <span className="bg-[#01B574]/10 px-2 py-0.5 rounded-md mr-2 text-xs">+Active</span>
-              <span className="text-gray-500">registered users</span>
-            </div>
-            {/* Simple Line Graphic */}
-            <svg className="absolute bottom-4 right-4 w-24 h-12" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path d="M0,80 L20,60 L40,70 L60,30 L80,50 L100,20" fill="none" stroke="#4318FF" strokeWidth="4" />
-            </svg>
-          </div>
-
-          {/* Total Products */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7] relative">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="w-10 h-10 rounded-full bg-[#E5ECF6] flex items-center justify-center">
-                <Package className="text-[#01B574] w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500 mb-1">TOTAL PRODUCTS</p>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">{products.length}</h2>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500"><span className="text-gray-900 font-medium border-l-2 border-[#01B574] pl-2">{rawHoneyCount}</span> X Raw Honey</p>
-              <p className="text-sm text-gray-500"><span className="text-gray-900 font-medium border-l-2 border-[#EE5D50] pl-2">{accessoriesCount}</span> X Accessories</p>
-            </div>
-          </div>
-
-          {/* Alerts */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7] relative">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="w-10 h-10 rounded-full bg-[#FFE2E5] flex items-center justify-center">
-                <BellRing className="text-[#EE5D50] w-5 h-5" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-gray-500 mb-1">UNRESOLVED ALERTS</p>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">{stats.unreadAlertsCount}</h2>
-            <div className="space-y-1">
-              <p className="text-sm text-[#EE5D50] bg-[#EE5D50]/10 px-2 py-1 rounded inline-block mr-2 font-medium">{alerts.filter(a => a.severity === 'CRITICAL').length} critical</p>
-              <p className="text-sm text-[#FFB547] bg-[#FFB547]/10 px-2 py-1 rounded inline-block font-medium">{alerts.filter(a => a.severity === 'WARNING').length} warnings</p>
-            </div>
-          </div>
+    <div className="w-full">
+      {/* Greeting */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-500 mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
-
-        {/* Middle Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Products Available */}
-          <div className="bg-[#E9EDF7] rounded-[20px] p-8 flex items-center justify-between shadow-inner">
-            <div>
-              <p className="text-sm font-bold text-gray-500 tracking-wider mb-2">PRODUCTS AVAILABLE IN STORE</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-6xl font-black text-gray-900">{totalStockInStore}</span>
-                <span className="text-xl font-bold text-gray-900">in stock</span>
-              </div>
-            </div>
-            <div className="text-right space-y-2">
-              {products.slice(0, 5).map(p => (
-                 <p key={p.id} className="text-gray-900 font-medium"><span className="bg-white text-xs px-2 py-1 rounded shadow-sm mr-2">{p.stock_units}</span> {p.name}</p>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7] flex flex-col justify-center items-center">
-            <h3 className="text-lg font-bold text-gray-900 w-full text-left mb-6">TODAY'S SALES</h3>
-            <div className="text-center w-full">
-               <span className="text-5xl font-black text-gray-900">{stats.unitsSold}</span>
-               <p className="text-gray-500 font-medium mt-2 mb-4">transactions completed</p>
-               {/* Chart placeholder */}
-               <div className="w-full h-24 bg-[#F4F7FE] rounded-lg mt-4 flex items-end justify-between px-4 pb-2">
-                 {[40, 20, 60, 30, 80, 50, 90, 45, 60, 30, 20, 50].map((h, i) => (
-                   <div key={i} className="w-[6%] bg-amber-500 rounded-t-sm opacity-80" style={{ height: `${h}%` }}></div>
-                 ))}
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* Left Column */}
-          <div className="space-y-6">
-            
-            {/* Quick Report */}
-            <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7]">
-               <h3 className="text-lg font-bold text-gray-900 mb-4">QUICK REPORT GENERATION</h3>
-               <button onClick={handleDownloadReport} className="w-full bg-amber-500 hover:bg-[#3211b8] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#4318FF]/20">
-                 <Download size={20} />
-                 Download CSV Daily Report
-               </button>
-            </div>
-
-            {/* Create Sales Agent */}
-            <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7]">
-               <h3 className="text-lg font-bold text-gray-900 mb-6">CREATE SALES AGENT QUICK</h3>
-               <div className="space-y-4">
-                 <div>
-                   <label className="text-sm font-medium text-gray-900 mb-2 block">Agent Username</label>
-                   <input 
-                     value={agentName}
-                     onChange={e => setAgentName(e.target.value)}
-                     className="w-full bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:border-[#4318FF]"
-                     placeholder="no spaces"
-                   />
-                 </div>
-                 <div>
-                   <label className="text-sm font-medium text-gray-900 mb-2 block">Temporary Password (optional)</label>
-                   <input 
-                     type="password"
-                     value={agentPass}
-                     onChange={e => setAgentPass(e.target.value)}
-                     className="w-full bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:border-[#4318FF]"
-                     placeholder="Auto-generated if empty"
-                   />
-                 </div>
-                 <button onClick={handleCreateAgent} className="w-full bg-[#1E2336] hover:bg-[#111421] text-white py-4 rounded-xl font-bold transition-colors mt-2">
-                   Create Agent
-                 </button>
-               </div>
-            </div>
-          </div>
-
-          {/* Right Column: Add Product */}
-          <div className="bg-white rounded-[20px] p-6 shadow-sm border border-[#E9EDF7] relative overflow-hidden">
-             
-             <h3 className="text-lg font-bold text-gray-900 mb-6">QUICK ADD PRODUCTS STOCK</h3>
-             
-             <div className="p-6 bg-white border border-[#E9EDF7] shadow-xl rounded-[20px] mb-8 relative z-10">
-               <div className="space-y-4 mb-6">
-                 <div>
-                   <label className="text-sm font-medium text-gray-500 mb-2 block">Select Product to Restock</label>
-                   <select 
-                      value={selectedProduct} 
-                      onChange={e => setSelectedProduct(e.target.value)}
-                      className="w-full bg-[#F4F7FE] border-none rounded-xl px-4 py-3 text-gray-900 font-medium appearance-none outline-none"
-                   >
-                     <option value="">Pick a product...</option>
-                     {products.map(p => (
-                       <option key={p.id} value={p.id}>{p.name} (Current: {p.stock_units})</option>
-                     ))}
-                   </select>
-                 </div>
-               </div>
-               
-               <button onClick={handleRestockProduct} className="w-full bg-[#FFCE20] hover:bg-[#e6b91c] text-[#1E2336] py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#FFCE20]/30">
-                 <Plus size={20} />
-                 Add +100 Stock to Selected
-               </button>
-             </div>
-
-             <div className="mt-8 relative z-10">
-               <h4 className="text-sm font-bold text-gray-500 mb-4 uppercase">Recent Inventory List</h4>
-               <div className="space-y-3 h-[200px] overflow-y-auto pr-2">
-                 {products.map(p => (
-                    <div key={p.id} className="flex items-center justify-between p-3 hover:bg-[#F4F7FE] rounded-xl transition-colors bg-white border border-transparent hover:border-[#E9EDF7]">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${p.stock_units < 10 ? 'bg-[#FFE2E5] text-[#EE5D50]' : 'bg-[#E5ECF6] text-amber-500'}`}>
-                           {p.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{p.name}</p>
-                          <p className={`text-sm ${p.stock_units < 10 ? 'text-[#EE5D50] font-bold' : 'text-gray-500'}`}>{p.stock_units} In Stock</p>
-                        </div>
-                      </div>
-                      <span className="font-bold text-gray-900">RWF {p.price_per_unit.toLocaleString()}</span>
-                    </div>
-                 ))}
-                 {products.length === 0 && <p className="text-gray-500 text-sm py-4">No products found.</p>}
-               </div>
-             </div>
-
-             {/* Background Decoration */}
-             <div className="absolute top-20 right-0 w-[300px] h-[300px] bg-gradient-to-br from-[#4318FF]/5 to-transparent rounded-full blur-3xl z-0 pointer-events-none"></div>
-          </div>
-
+        <div className="flex gap-2">
+          <button onClick={() => router.push('/admin/products')} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"><Plus size={16} /> Add Product</button>
+          <button onClick={handleDownloadReport} className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/25"><Download size={16} /> Report</button>
         </div>
       </div>
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Kpi icon={Banknote} tint="green" label="Today's Earnings" value={`RWF ${stats.totalRevenue.toLocaleString()}`} sub={`Avg RWF ${stats.unitsSold > 0 ? Math.round(stats.totalRevenue / stats.unitsSold).toLocaleString() : 0}/sale`} />
+        <Kpi icon={ShoppingCart} tint="blue" label="Sales Today" value={stats.unitsSold} sub="transactions" />
+        <Kpi icon={Users} tint="amber" label="Active Agents" value={stats.activeManagers} sub="online recently" />
+        <Kpi icon={BellRing} tint={stats.unreadAlertsCount > 0 ? 'red' : 'gray'} label="Unresolved Alerts" value={stats.unreadAlertsCount} sub={`${alerts.filter(a => a.severity === 'CRITICAL').length} critical`} />
       </div>
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Sales chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-[#E9EDF7] p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2"><TrendingUp size={20} className="text-amber-500" /> Sales Today</h3>
+            <span className="bg-emerald-50 text-emerald-600 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1"><ArrowUpRight size={12} /> Live</span>
+          </div>
+          <div className="h-44 flex items-end justify-between gap-3">
+            {chart.map((h, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                <div className="w-full bg-[#F4F7FE] rounded-t-lg flex items-end" style={{ height: '100%' }}>
+                  <div className="w-full bg-gradient-to-t from-amber-500 to-amber-400 rounded-t-lg transition-all duration-700 group-hover:from-amber-600" style={{ height: `${Math.max(h, 3)}%` }} />
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium">{['8a', '10a', '12p', '2p', '4p', '6p', '8p'][i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick actions */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-[#E9EDF7] p-6 space-y-5">
+          <h3 className="text-lg font-extrabold text-gray-900">Quick Actions</h3>
+          {/* Create agent */}
+          <div className="space-y-2.5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5"><UserPlus size={14} /> New Sales Agent</p>
+            <input value={agentName} onChange={e => setAgentName(e.target.value)} placeholder="Username" className="w-full bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <input value={agentPass} onChange={e => setAgentPass(e.target.value)} type="password" placeholder="Password (optional)" className="w-full bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <button onClick={handleCreateAgent} className="w-full bg-[#1E2336] hover:bg-black text-white py-2.5 rounded-xl font-bold text-sm transition">Create Agent</button>
+          </div>
+          {/* Restock */}
+          <div className="space-y-2.5 pt-2 border-t border-gray-100">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide flex items-center gap-1.5"><PackagePlus size={14} /> Quick Restock</p>
+            <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)} className="w-full bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+              <option value="">Pick a product…</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.stock_units})</option>)}
+            </select>
+            <div className="flex gap-2">
+              <input type="number" min="1" value={restockQty} onChange={e => setRestockQty(Number(e.target.value))} className="w-24 bg-[#F4F7FE] border border-[#E9EDF7] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+              <button onClick={handleRestock} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-1.5"><Plus size={16} /> Add Stock</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Alerts */}
+        <div id="alerts" className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-[#E9EDF7] p-6 scroll-mt-24">
+          <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2 mb-4"><ShieldAlert size={20} className="text-red-500" /> System Alerts</h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {alerts.length === 0 ? (
+              <div className="text-center py-10 text-gray-400"><CheckCircle2 size={36} className="mx-auto mb-2 text-emerald-400" /><p className="text-sm font-medium">All clear — no active alerts.</p></div>
+            ) : alerts.map(a => (
+              <div key={a.id} className={`p-3.5 rounded-xl border ${a.severity === 'CRITICAL' ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle size={16} className={a.severity === 'CRITICAL' ? 'text-red-500 mt-0.5' : 'text-amber-500 mt-0.5'} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900">{a.title}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">{a.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Inventory snapshot */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-[#E9EDF7] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2"><Package size={20} className="text-amber-500" /> Inventory</h3>
+            <span className="text-sm font-black text-gray-900">{totalStock.toLocaleString()} <span className="text-gray-400 font-medium text-xs">units</span></span>
+          </div>
+          {lowStock.length > 0 && <p className="text-xs font-bold text-amber-600 mb-3">⚠ {lowStock.length} item(s) low on stock</p>}
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {products.slice(0, 8).map(p => (
+              <div key={p.id} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F4F7FE]">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-lg overflow-hidden bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                    {p.image_url ? <img src={p.image_url} alt="" loading="lazy" className="w-full h-full object-cover" /> : <Package size={16} />}
+                  </div>
+                  <span className="font-bold text-sm text-gray-900 truncate">{p.name}</span>
+                </div>
+                <span className={`text-sm font-bold ${p.stock_units <= p.min_stock_threshold ? 'text-red-500' : 'text-emerald-600'}`}>{p.stock_units}</span>
+              </div>
+            ))}
+            {products.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No products yet.</p>}
+          </div>
+        </div>
+
+        {/* Recent sales */}
+        <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(16,24,40,0.05)] border border-[#E9EDF7] p-6">
+          <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2 mb-4"><ShoppingCart size={20} className="text-amber-500" /> Recent Sales</h3>
+          <div className="space-y-2.5 max-h-80 overflow-y-auto">
+            {recent.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">No sales recorded yet.</p>
+            ) : recent.map((r, i) => (
+              <div key={r.id || i} className="flex items-center justify-between bg-[#F4F7FE] rounded-xl p-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900 truncate">{r.product?.name || 'Product'}</p>
+                  <p className="text-[11px] text-gray-500">{r.manager?.full_name || 'Agent'} · {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                <span className="font-black text-emerald-600 text-sm shrink-0 ml-2">+{(r.total_amount || 0).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {toast && (
+        <div className={`fixed bottom-6 right-4 z-[60] px-5 py-3.5 rounded-xl shadow-xl flex items-center gap-2.5 text-sm font-bold text-white ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+          {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}{toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Kpi({ icon: Icon, tint, label, value, sub }: { icon: any; tint: string; label: string; value: any; sub?: string }) {
+  const tints: Record<string, string> = {
+    green: 'from-emerald-500 to-emerald-600 shadow-emerald-500/30',
+    blue: 'from-blue-500 to-blue-600 shadow-blue-500/30',
+    amber: 'from-amber-400 to-amber-500 shadow-amber-500/30',
+    red: 'from-red-500 to-rose-600 shadow-rose-500/30',
+    gray: 'from-slate-400 to-slate-500 shadow-slate-500/30',
+  };
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-[#E9EDF7] shadow-[0_4px_24px_rgba(16,24,40,0.05)] hover:shadow-[0_10px_30px_rgba(16,24,40,0.10)] hover:-translate-y-0.5 transition-all">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br text-white shadow-lg ${tints[tint]}`}><Icon size={22} /></div>
+      <p className="text-[13px] text-gray-500 font-bold uppercase tracking-wider">{label}</p>
+      <p className="text-2xl font-black text-gray-900 mt-1 leading-none">{value}</p>
+      {sub && <p className="text-xs text-gray-400 font-medium mt-1.5">{sub}</p>}
     </div>
   );
 }

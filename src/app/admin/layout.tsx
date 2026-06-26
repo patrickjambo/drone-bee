@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F7FE] flex font-sans text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-[#EAEEF7] via-[#EEF1F8] to-[#E6EBF5] flex font-sans text-gray-800">
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white h-[70px] z-[60] flex items-center px-4 border-b border-gray-200">
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 -ml-2 mr-2 text-gray-700 hover:bg-gray-100 rounded-md">
           {mobileMenuOpen ? <X size={24}/> : <Menu size={24}/>}

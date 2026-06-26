@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   MapPin, User, Facebook, Twitter, Instagram, Leaf, Globe2,
   ShieldCheck, ArrowRight, Star, ShoppingBag, BadgeCheck,
@@ -29,6 +29,14 @@ const products = [
   { img: "/p2.jpg", name: "Family Honey Can", size: "2L · Jerrycan", desc: "Pure natural honey in a generous size for the whole household.", tag: "Best Value", tagCls: "bg-emerald-400 text-[#0c2b1e]" },
   { img: "/p3.jpg", name: "Squeeze Bottle", size: "750ml · Easy-Pour", desc: "Everyday honey in a convenient, mess-free squeeze bottle.", tag: "New", tagCls: "bg-sky-400 text-[#0b2230]" },
 ];
+
+// Every product gets a photo: its own image, or a stable honey fallback.
+const FALLBACK_IMAGES = ["/p1.jpg", "/p2.jpg", "/p3.jpg"];
+function imgFor(p: { id: string; image_url?: string | null }) {
+  if (p.image_url) return p.image_url;
+  const n = p.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return FALLBACK_IMAGES[n % FALLBACK_IMAGES.length];
+}
 
 const stats = [
   { value: 12000, suffix: "+", label: "Jars Delivered" },
@@ -102,9 +110,37 @@ export default function Home() {
   const [current, setCurrent] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+
+  // Pull live products so admin-added items + photos show on the home page.
+  useEffect(() => {
+    fetch("/api/products").then((r) => (r.ok ? r.json() : [])).then((d) => { if (Array.isArray(d)) setDbProducts(d); }).catch(() => {});
+  }, []);
+
+  // Hero slides: real products (with photo) + brand logo; fall back to defaults.
+  const slides = useMemo(() => {
+    if (dbProducts.length === 0) return heroSlides;
+    const prod = dbProducts.slice(0, 4).map((p) => ({ src: imgFor(p), fit: "cover" as const, label: p.name, sub: `RWF ${p.price_per_unit.toLocaleString()} · ${p.honey_type}` }));
+    return [...prod, { src: "/logo.png", fit: "contain" as const, label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" }];
+  }, [dbProducts]);
+
+  // Collection: real products; fall back to defaults.
+  const collection = useMemo(() => {
+    if (dbProducts.length === 0) return products;
+    return dbProducts.slice(0, 3).map((p, i) => ({
+      img: imgFor(p),
+      name: p.name,
+      size: `${p.honey_type}${p.origin ? ` · ${p.origin}` : ""}`,
+      desc: `Raw, natural honey — RWF ${p.price_per_unit.toLocaleString()} per unit.`,
+      tag: p.stock_units === 0 ? "Sold out" : i === 0 ? "Bestseller" : "Available",
+      tagCls: p.stock_units === 0 ? "bg-red-400 text-white" : i === 0 ? "bg-amber-400 text-[#171B2C]" : "bg-emerald-400 text-[#0c2b1e]",
+    }));
+  }, [dbProducts]);
+
+  const activeIndex = slides.length ? current % slides.length : 0;
 
   useEffect(() => {
-    const t = setInterval(() => setCurrent((p) => (p + 1) % heroSlides.length), 3500);
+    const t = setInterval(() => setCurrent((p) => p + 1), 3500);
     return () => clearInterval(t);
   }, []);
 
@@ -234,17 +270,17 @@ export default function Home() {
             <div className="absolute -inset-6 bg-gradient-to-br from-amber-400/25 to-orange-500/10 blur-3xl rounded-full pointer-events-none" />
 
             <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden border border-white/15 bg-gradient-to-br from-amber-200 via-amber-100 to-orange-50 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
-              {heroSlides.map((s, i) => (
-                <img key={s.src} src={s.src} alt={s.label} loading="eager"
-                  className={`absolute inset-0 w-full h-full transition-opacity duration-[1100ms] ease-in-out ${s.fit === "contain" ? "object-contain p-10" : "object-cover"} ${i === current ? "opacity-100" : "opacity-0"}`} />
+              {slides.map((s, i) => (
+                <img key={i} src={s.src} alt={s.label} loading="eager"
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-[1100ms] ease-in-out ${s.fit === "contain" ? "object-contain p-10" : "object-cover"} ${i === activeIndex ? "opacity-100" : "opacity-0"}`} />
               ))}
               <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md border border-white/20 rounded-xl px-3 py-2">
                 <p className="text-[11px] text-amber-200 font-semibold leading-none">Made in</p>
                 <p className="text-sm font-black text-white">🇷🇼 Rwanda</p>
               </div>
               <div className="absolute inset-x-0 bottom-0 p-5 pt-12 bg-gradient-to-t from-black/75 via-black/30 to-transparent">
-                <p className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.18em]">{heroSlides[current].sub}</p>
-                <p className="text-white text-2xl font-black leading-tight">{heroSlides[current].label}</p>
+                <p className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.18em]">{slides[activeIndex].sub}</p>
+                <p className="text-white text-2xl font-black leading-tight">{slides[activeIndex].label}</p>
               </div>
             </div>
 
@@ -254,10 +290,10 @@ export default function Home() {
             </div>
 
             <div className="mt-5 grid grid-cols-5 gap-2.5 sm:gap-3">
-              {heroSlides.map((s, i) => (
-                <button key={s.src} onClick={() => setCurrent(i)} aria-label={s.label}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === current ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.04]" : "border-white/10 opacity-55 hover:opacity-100"}`}>
-                  <img src={s.src} alt={s.label} className={`w-full h-full ${s.fit === "contain" ? "object-contain p-1.5 bg-amber-50" : "object-cover"}`} />
+              {slides.map((s, i) => (
+                <button key={i} onClick={() => setCurrent(i)} aria-label={s.label}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === activeIndex ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.04]" : "border-white/10 opacity-55 hover:opacity-100"}`}>
+                  <img src={s.src} alt={s.label} loading="lazy" className={`w-full h-full ${s.fit === "contain" ? "object-contain p-1.5 bg-amber-50" : "object-cover"}`} />
                 </button>
               ))}
             </div>
@@ -306,11 +342,11 @@ export default function Home() {
           </Reveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {products.map((p, i) => (
-              <Reveal key={p.name} delay={i * 120}>
+            {collection.map((p, i) => (
+              <Reveal key={i} delay={i * 120}>
                 <div className="group bg-white rounded-3xl overflow-hidden shadow-[0_10px_40px_rgba(23,27,44,0.08)] hover:shadow-[0_24px_60px_rgba(229,181,61,0.25)] border border-amber-100 transition-all duration-500 hover:-translate-y-2 h-full flex flex-col">
                   <div className="relative h-72 overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50">
-                    <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <img src={p.img} alt={p.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <span className={`absolute top-4 left-4 text-xs font-black px-3 py-1.5 rounded-full shadow-md ${p.tagCls}`}>{p.tag}</span>
                   </div>
                   <div className="p-7 flex flex-col flex-1">
