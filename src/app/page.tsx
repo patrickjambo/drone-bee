@@ -117,11 +117,15 @@ export default function Home() {
     fetch("/api/products").then((r) => (r.ok ? r.json() : [])).then((d) => { if (Array.isArray(d)) setDbProducts(d); }).catch(() => {});
   }, []);
 
-  // Hero slides: real products (with photo) + brand logo; fall back to defaults.
+  // Hero slides: real products (with photo) + the lifestyle & logo brand slides.
   const slides = useMemo(() => {
+    const brand = [
+      { src: "/suko22.jpg", fit: "cover" as const, label: "Loved Across Rwanda", sub: "Our customers' favourite" },
+      { src: "/logo.png", fit: "contain" as const, label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" },
+    ];
     if (dbProducts.length === 0) return heroSlides;
-    const prod = dbProducts.slice(0, 4).map((p) => ({ src: imgFor(p), fit: "cover" as const, label: p.name, sub: `RWF ${p.price_per_unit.toLocaleString()} · ${p.honey_type}` }));
-    return [...prod, { src: "/logo.png", fit: "contain" as const, label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" }];
+    const prod = dbProducts.slice(0, 3).map((p) => ({ src: imgFor(p), fit: "cover" as const, label: p.name, sub: `RWF ${p.price_per_unit.toLocaleString()} · ${p.honey_type}` }));
+    return [...prod, ...brand];
   }, [dbProducts]);
 
   // Collection: real products; fall back to defaults.
