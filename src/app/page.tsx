@@ -117,15 +117,19 @@ export default function Home() {
     fetch("/api/products").then((r) => (r.ok ? r.json() : [])).then((d) => { if (Array.isArray(d)) setDbProducts(d); }).catch(() => {});
   }, []);
 
-  // Hero slides: real products (with photo) + the lifestyle & logo brand slides.
+  // Hero slides: mix real products (their photo) with the brand gallery
+  // (p1/p2/p3 jars + suko22 lifestyle + logo). De-duplicate by image, cap at 8.
   const slides = useMemo(() => {
-    const brand = [
-      { src: "/suko22.jpg", fit: "cover" as const, label: "Loved Across Rwanda", sub: "Our customers' favourite" },
-      { src: "/logo.png", fit: "contain" as const, label: "Drone Bee Ltd", sub: "Premium Rwandan Honey" },
-    ];
-    if (dbProducts.length === 0) return heroSlides;
-    const prod = dbProducts.slice(0, 3).map((p) => ({ src: imgFor(p), fit: "cover" as const, label: p.name, sub: `RWF ${p.price_per_unit.toLocaleString()} · ${p.honey_type}` }));
-    return [...prod, ...brand];
+    const prod = dbProducts.slice(0, 4).map((p) => ({ src: imgFor(p), fit: "cover" as const, label: p.name, sub: `RWF ${p.price_per_unit.toLocaleString()} · ${p.honey_type}` }));
+    const seen = new Set<string>();
+    const merged: Array<{ src: string; fit: string; label: string; sub: string }> = [];
+    for (const s of [...prod, ...heroSlides]) {
+      if (seen.has(s.src)) continue;
+      seen.add(s.src);
+      merged.push(s);
+      if (merged.length >= 8) break;
+    }
+    return merged;
   }, [dbProducts]);
 
   // Collection: real products; fall back to defaults.
@@ -293,10 +297,10 @@ export default function Home() {
               <span className="text-xs font-black">4.9/5</span>
             </div>
 
-            <div className="mt-5 grid grid-cols-5 gap-2.5 sm:gap-3">
+            <div className="mt-5 flex flex-wrap justify-center gap-2.5 sm:gap-3">
               {slides.map((s, i) => (
                 <button key={i} onClick={() => setCurrent(i)} aria-label={s.label}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === activeIndex ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.04]" : "border-white/10 opacity-55 hover:opacity-100"}`}>
+                  className={`relative w-14 h-14 sm:w-[4.25rem] sm:h-[4.25rem] shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${i === activeIndex ? "border-amber-400 ring-2 ring-amber-400/30 scale-[1.04]" : "border-white/10 opacity-55 hover:opacity-100"}`}>
                   <img src={s.src} alt={s.label} loading="lazy" className={`w-full h-full ${s.fit === "contain" ? "object-contain p-1.5 bg-amber-50" : "object-cover"}`} />
                 </button>
               ))}
