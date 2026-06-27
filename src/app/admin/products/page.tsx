@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Package, Search, X, PackagePlus, AlertTriangle, ImageIcon, ExternalLink } from 'lucide-react';
+import { Plus, Package, Search, X, PackagePlus, AlertTriangle, ExternalLink } from 'lucide-react';
+import ImageUploadField from '@/components/ImageUploadField';
 
 type Product = {
   id: string;
@@ -158,13 +159,10 @@ export default function AdminProductsPage() {
               <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Image preview column */}
+              {/* Image upload column */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-gray-600 mb-1.5">Product Photo</label>
-                <div className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 bg-[#F4F7FE] overflow-hidden flex items-center justify-center">
-                  {form.image_url ? <img src={form.image_url} alt="preview" className="w-full h-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.2')} /> : <div className="text-center text-gray-400 p-4"><ImageIcon size={32} className="mx-auto mb-2" /><p className="text-xs">Paste an image URL to preview</p></div>}
-                </div>
-                <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} className={`${inputCls} mt-2`} placeholder="https://… image URL" />
+                <ImageUploadField value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />
                 <p className="text-[11px] text-gray-400 mt-1.5 flex items-center gap-1"><ExternalLink size={11} /> Shows in Shop Hub & Home hero</p>
               </div>
               {/* Fields */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Package, Search, X, PackagePlus, AlertTriangle } from 'lucide-react';
+import ImageUploadField from '@/components/ImageUploadField';
 
 type Product = {
   id: string;
@@ -197,7 +198,7 @@ export default function ProductsPage() {
               <div className="col-span-2">{field('Product Name', <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className={inputCls} placeholder="e.g. Acacia Raw Honey 500g" />)}</div>
               {field('Honey Type', <input required value={formData.honey_type} onChange={e => setFormData({ ...formData, honey_type: e.target.value })} className={inputCls} placeholder="e.g. Raw" />)}
               {field('Origin', <input value={formData.origin} onChange={e => setFormData({ ...formData, origin: e.target.value })} className={inputCls} placeholder="e.g. Nyungwe" />)}
-              <div className="col-span-2">{field('Image URL (optional)', <input value={formData.image_url} onChange={e => setFormData({ ...formData, image_url: e.target.value })} className={inputCls} placeholder="https://… product photo (shows in Shop)" />)}</div>
+              <div className="col-span-2">{field('Product Photo', <ImageUploadField value={formData.image_url} onChange={(v) => setFormData({ ...formData, image_url: v })} />)}</div>
               {field('Price / Unit (RWF)', <input type="number" min="0" required value={formData.price_per_unit || ''} onChange={e => setFormData({ ...formData, price_per_unit: Number(e.target.value) })} className={inputCls} />)}
               {field('Units / Batch', <input type="number" min="1" required value={formData.batch_size || ''} onChange={e => setFormData({ ...formData, batch_size: Number(e.target.value) })} className={inputCls} />)}
               {field('Price / Batch (RWF)', <input type="number" min="0" value={formData.price_per_batch || ''} onChange={e => setFormData({ ...formData, price_per_batch: Number(e.target.value) })} className={inputCls} placeholder="auto" />)}

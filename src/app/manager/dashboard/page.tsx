@@ -8,6 +8,7 @@ import {
   Box, User, Sparkles, Receipt, Wallet, Percent, Tag,
   Pause, RotateCcw, LayoutGrid, List, Coins, Crown
 } from 'lucide-react';
+import ImageUploadField from '@/components/ImageUploadField';
 
 type Product = {
   id: string;
@@ -841,7 +842,7 @@ function AddProductModal({ onClose, onCreated, onError }: { onClose: () => void;
           <div className="col-span-2">{field('Product Name', <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls} placeholder="e.g. Acacia Raw Honey 500g" />)}</div>
           {field('Honey Type', <input required value={form.honey_type} onChange={e => setForm({ ...form, honey_type: e.target.value })} className={inputCls} placeholder="e.g. Raw" />)}
           {field('Origin', <input value={form.origin} onChange={e => setForm({ ...form, origin: e.target.value })} className={inputCls} placeholder="e.g. Nyungwe" />)}
-          <div className="col-span-2">{field('Image URL (optional)', <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} className={inputCls} placeholder="https://… product photo (shows in Shop)" />)}</div>
+          <div className="col-span-2">{field('Product Photo', <ImageUploadField value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })} />)}</div>
           {field('Price / Unit (RWF)', <input type="number" min="0" required value={form.price_per_unit || ''} onChange={e => setForm({ ...form, price_per_unit: Number(e.target.value) })} className={inputCls} />)}
           {field('Units / Batch', <input type="number" min="1" required value={form.batch_size || ''} onChange={e => setForm({ ...form, batch_size: Number(e.target.value) })} className={inputCls} />)}
           {field('Price / Batch (RWF)', <input type="number" min="0" value={form.price_per_batch || ''} onChange={e => setForm({ ...form, price_per_batch: Number(e.target.value) })} className={inputCls} placeholder="auto" />)}
