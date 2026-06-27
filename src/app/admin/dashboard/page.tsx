@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Users, Package, BellRing, Download, Plus, Banknote, TrendingUp,
-  AlertTriangle, ShoppingCart, UserPlus, PackagePlus, ArrowUpRight, CheckCircle2, ShieldAlert,
+  AlertTriangle, ShoppingCart, UserPlus, PackagePlus, ArrowUpRight, CheckCircle2, ShieldAlert, Ban,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -60,6 +60,15 @@ export default function AdminDashboard() {
       if (res.ok) { showToast('success', `Added ${restockQty} units.`); fetchAllData(); }
       else { const d = await res.json().catch(() => ({})); showToast('error', d.error || 'Failed to restock.'); }
     } catch { showToast('error', 'Error restocking.'); }
+  };
+
+  const voidSale = async (id: string) => {
+    if (!confirm('Void this sale? The stock will be returned to inventory. This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/admin/sales/${id}/void`, { method: 'POST' });
+      if (res.ok) { const d = await res.json(); showToast('success', `Sale voided · ${d.restored} units restored.`); fetchAllData(); }
+      else { const d = await res.json().catch(() => ({})); showToast('error', d.error || 'Failed to void sale.'); }
+    } catch { showToast('error', 'Error voiding sale.'); }
   };
 
   const handleDownloadReport = () => {
@@ -206,15 +215,27 @@ export default function AdminDashboard() {
           <div className="space-y-2.5 max-h-80 overflow-y-auto">
             {recent.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-8">No sales recorded yet.</p>
-            ) : recent.map((r, i) => (
-              <div key={r.id || i} className="flex items-center justify-between bg-[#F4F7FE] rounded-xl p-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">{r.product?.name || 'Product'}</p>
-                  <p className="text-[11px] text-gray-500">{r.manager?.full_name || 'Agent'} · {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+            ) : recent.map((r, i) => {
+              const voided = r.status === 'VOIDED';
+              return (
+                <div key={r.id || i} className={`flex items-center justify-between rounded-xl p-3 ${voided ? 'bg-gray-50 opacity-70' : r.flagged ? 'bg-amber-50 border border-amber-100' : 'bg-[#F4F7FE]'}`}>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-bold truncate ${voided ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                      {r.product?.name || 'Product'} {r.flagged && !voided && <span title={r.flag_reason || 'Flagged'} className="text-amber-500">⚑</span>}
+                    </p>
+                    <p className="text-[11px] text-gray-500">{r.manager?.full_name || 'Agent'} · {r.quantity} {r.sale_type} · {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {voided
+                      ? <span className="text-[11px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md">Voided</span>
+                      : <>
+                          <span className="font-black text-emerald-600 text-sm">+{(r.total_amount || 0).toLocaleString()}</span>
+                          <button onClick={() => voidSale(r.id)} title="Void sale & restore stock" className="text-gray-300 hover:text-red-500 transition"><Ban size={16} /></button>
+                        </>}
+                  </div>
                 </div>
-                <span className="font-black text-emerald-600 text-sm shrink-0 ml-2">+{(r.total_amount || 0).toLocaleString()}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

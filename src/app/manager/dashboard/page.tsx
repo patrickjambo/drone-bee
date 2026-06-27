@@ -35,7 +35,7 @@ type CartItem = {
   batchSize: number;
 };
 
-type Parked = { id: string; items: CartItem[]; customer: string; payment: string; total: number; at: string };
+type Parked = { id: string; items: CartItem[]; customerId: string; payment: string; total: number; at: string };
 
 const PAYMENTS = [
   { id: 'Cash', label: 'Cash', icon: Wallet },
@@ -57,7 +57,7 @@ export default function ManagerDashboard() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerName, setCustomerName] = useState('Walk-in Customer');
+  const [customerId, setCustomerId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [discount, setDiscount] = useState(0);          // amount in RWF
   const [discountPct, setDiscountPct] = useState(0);     // active % chip
@@ -182,6 +182,7 @@ export default function ManagerDashboard() {
   const tenderedNum = Number(tendered) || 0;
   const change = paymentMethod === 'Cash' && tenderedNum > 0 ? Math.max(0, tenderedNum - total) : 0;
   const cashShort = paymentMethod === 'Cash' && tenderedNum > 0 && tenderedNum < total;
+  const customerName = customers.find(c => c.id === customerId)?.name || 'Walk-in Customer';
 
   // physical units committed in cart for a product (optionally excluding a line)
   const committedUnits = useCallback((productId: string, exceptKey?: string) =>
@@ -246,9 +247,9 @@ export default function ManagerDashboard() {
 
   const parkSale = () => {
     if (cart.length === 0) return;
-    setParked(prev => [{ id: `P-${Date.now()}`, items: cart, customer: customerName, payment: paymentMethod, total, at: new Date().toISOString() }, ...prev]);
+    setParked(prev => [{ id: `P-${Date.now()}`, items: cart, customerId, payment: paymentMethod, total, at: new Date().toISOString() }, ...prev]);
     resetSale();
-    setCustomerName('Walk-in Customer');
+    setCustomerId('');
     showToast('success', 'Order parked. Start a new sale.');
   };
 
@@ -257,7 +258,7 @@ export default function ManagerDashboard() {
     const s = parked.find(p => p.id === id);
     if (!s) return;
     setCart(s.items);
-    setCustomerName(s.customer);
+    setCustomerId(s.customerId);
     setPaymentMethod(s.payment);
     setParked(prev => prev.filter(p => p.id !== id));
     setShowParked(false);
@@ -271,7 +272,7 @@ export default function ManagerDashboard() {
       const payload = cart.map(i => ({ productId: i.productId, saleType: i.saleType, quantity: i.quantity }));
       const res = await fetch('/api/manager/pos', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: payload }),
+        body: JSON.stringify({ items: payload, customerId: customerId || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Sale failed');
@@ -347,10 +348,10 @@ export default function ManagerDashboard() {
         <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Customer</label>
         <div className="relative mt-1.5">
           <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <select value={customerName} onChange={e => setCustomerName(e.target.value)}
+          <select value={customerId} onChange={e => setCustomerId(e.target.value)}
             className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-amber-400">
-            <option>Walk-in Customer</option>
-            {customers.map(c => <option key={c.id} value={c.name}>{c.name}{c.type ? ` · ${c.type}` : ''}</option>)}
+            <option value="">Walk-in Customer</option>
+            {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.type ? ` · ${c.type}` : ''}{c.points ? ` · ${c.points} pts` : ''}</option>)}
           </select>
         </div>
       </div>
@@ -501,7 +502,7 @@ export default function ManagerDashboard() {
                       {parked.map(p => (
                         <button key={p.id} onClick={() => resumeSale(p.id)} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-bold text-gray-800">{p.customer}</p>
+                            <p className="text-sm font-bold text-gray-800">{customers.find(c => c.id === p.customerId)?.name || 'Walk-in Customer'}</p>
                             <p className="text-[11px] text-gray-500">{p.items.length} item(s) · {new Date(p.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                           <span className="text-sm font-black text-gray-900 flex items-center gap-1"><RotateCcw size={13} className="text-amber-500" /> {p.total.toLocaleString()}</span>

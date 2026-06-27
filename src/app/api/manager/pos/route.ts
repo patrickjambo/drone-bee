@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
   try {
-    const { items } = await req.json(); // Array of { productId, saleType ('BATCH' or 'UNIT'), quantity }
+    const { items, customerId } = await req.json(); // items: [{ productId, saleType, quantity }], optional customerId for loyalty
     
     // Process transaction in a Prisma transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
@@ -145,7 +145,20 @@ export async function POST(req: Request) {
         createdSales.push(sale);
       }
 
-      return { 
+      // Loyalty: award points (1 per RWF 100) + update spend for a registered customer.
+      // updateMany never throws if the id is missing, so it can't break the sale.
+      if (customerId) {
+        await tx.customer.updateMany({
+          where: { id: customerId },
+          data: {
+            points: { increment: Math.floor(shiftTotal / 100) },
+            total_spent: { increment: shiftTotal },
+            last_visit: new Date(),
+          },
+        });
+      }
+
+      return {
         success: true, 
         totalLoaded: shiftTotal, 
         salesCount: createdSales.length,
