@@ -19,22 +19,31 @@ export default function Wholesale() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
+    // Best-effort log to the backend (no orders table yet).
     try {
-      const res = await fetch("/api/public/wholesale", {
+      await fetch("/api/public/wholesale", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-      
-      if (res.ok) {
-        setIsSuccess(true);
-      }
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsSubmitting(false);
     }
+
+    // Deliver the lead straight to the sales team via WhatsApp.
+    const msg =
+      `*Wholesale Inquiry — Drone Bee* 🍯\n` +
+      `Company: ${formData.company}\n` +
+      `Contact: ${formData.name}\n` +
+      `Phone: ${formData.phone}\n` +
+      `Email: ${formData.email}\n` +
+      `Volume: ${formData.volume}\n` +
+      `Details: ${formData.info || "—"}`;
+    window.open(`https://wa.me/250783314404?text=${encodeURIComponent(msg)}`, "_blank");
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

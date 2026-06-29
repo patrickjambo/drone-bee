@@ -190,6 +190,13 @@ function ProductModal({ product, typeOptions, originOptions, nameOptions, onClos
     is_active: product?.is_active ?? true,
   });
   const [saving, setSaving] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isEdit && product) {
+      fetch(`/api/admin/products/${product.id}`).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setHistory(d); }).catch(() => {});
+    }
+  }, [isEdit, product]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,6 +254,20 @@ function ProductModal({ product, typeOptions, originOptions, nameOptions, onClos
                 </label>
               )}
           </div>
+
+          {isEdit && history.length > 0 && (
+            <div className="md:col-span-3 border-t border-[#E9EDF7] pt-4">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Price history</p>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {history.map(h => (
+                  <div key={h.id} className="flex items-center justify-between text-xs bg-[#F4F7FE] rounded-lg px-3 py-2">
+                    <span className="text-gray-500">{new Date(h.changed_at).toLocaleDateString()} · {h.changed_by?.full_name || 'Admin'}</span>
+                    <span className="font-bold text-gray-800">RWF {Number(h.old_unit_price ?? 0).toLocaleString()} → {Number(h.new_unit_price).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="md:col-span-3 flex gap-3 pt-2 border-t border-[#E9EDF7]">
             <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50">Cancel</button>

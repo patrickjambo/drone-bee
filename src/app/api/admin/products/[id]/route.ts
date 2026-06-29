@@ -16,6 +16,26 @@ async function authAdmin() {
   }
 }
 
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const userId = await authAdmin();
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  try {
+    const { id } = await params;
+    const history = await prisma.priceHistory.findMany({
+      where: { product_id: id },
+      orderBy: { changed_at: 'desc' },
+      take: 50,
+      include: { changed_by: { select: { full_name: true } } },
+    });
+    return NextResponse.json(history);
+  } catch {
+    return NextResponse.json({ error: 'Failed to fetch price history' }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
