@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline · Drone Bee</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #0F1320; color: #fff; font-family: system-ui, sans-serif; text-align: center; padding: 24px; }
+    img { width: 110px; height: 110px; object-fit: contain; margin-bottom: 20px; }
+    h1 { color: #E8C265; margin: 0 0 8px; font-size: 26px; }
+    p { color: #94a3b8; max-width: 360px; line-height: 1.6; }
+    button { margin-top: 24px; background: #E8C265; color: #171B2C; border: 0; font-weight: 800;
+      padding: 12px 28px; border-radius: 12px; font-size: 15px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <img src="/logo.png" alt="Drone Bee" />
+  <h1>You're offline</h1>
+  <p>It looks like you've lost your connection. Check your network and try again — your Drone Bee data is safe.</p>
+  <button onclick="location.reload()">Retry</button>
+</body>
+</html>

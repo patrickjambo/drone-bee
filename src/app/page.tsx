@@ -8,6 +8,7 @@ import {
   Truck, Sparkles, Menu, X, Quote, Droplets, Hexagon, Flower2,
   Heart, CheckCircle2, Award,
 } from "lucide-react";
+import WhatsAppFab from "@/components/WhatsAppFab";
 
 const heroSlides = [
   { src: "/p1.jpg", fit: "cover", label: "Classic Honey Jar", sub: "500g · Glass Jar" },
@@ -542,6 +543,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <WhatsAppFab />
     </div>
   );
 }

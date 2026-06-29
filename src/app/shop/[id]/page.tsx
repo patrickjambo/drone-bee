@@ -7,6 +7,7 @@ import {
   ArrowLeft, ShoppingBag, Minus, Plus, Leaf, ShieldCheck, Truck,
   Package, Star, User, ChevronRight,
 } from 'lucide-react';
+import WhatsAppFab from '@/components/WhatsAppFab';
 
 const WHATSAPP = '250783314404';
 const FALLBACK = ['/p1.jpg', '/p2.jpg', '/p3.jpg'];
@@ -170,6 +171,7 @@ export default function ProductDetail() {
           <div className="flex gap-4 text-sm"><Link href="/shop" className="hover:text-[#E8C265]">Shop</Link><Link href="/wholesale" className="hover:text-[#E8C265]">Wholesale</Link><Link href="/about" className="hover:text-[#E8C265]">About</Link></div>
         </div>
       </footer>
+      <WhatsAppFab />
     </div>
   );
 }

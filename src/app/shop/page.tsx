@@ -6,6 +6,7 @@ import {
   User, ShieldCheck, ShoppingCart, CheckCircle, Search, Menu, X,
   Plus, Minus, Trash2, Package, ArrowRight, Leaf, ShieldCheck as Shield,
 } from "lucide-react";
+import WhatsAppFab from "@/components/WhatsAppFab";
 
 const WHATSAPP = "250783314404"; // business order line
 const FALLBACK_IMAGES = ["/p1.jpg", "/p2.jpg", "/p3.jpg"];
@@ -310,6 +311,7 @@ export default function ShopHub() {
           </div>
         </div>
       </footer>
+      <WhatsAppFab />
     </div>
   );
 }

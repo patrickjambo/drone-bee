@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { User, ShieldCheck, CheckCircle2, ChevronRight, Building, Package, Truck, Target } from "lucide-react";
+import WhatsAppFab from "@/components/WhatsAppFab";
 import { useState } from "react";
 
 export default function Wholesale() {
@@ -202,6 +203,7 @@ export default function Wholesale() {
           </div>
         </div>
       </main>
+      <WhatsAppFab />
     </div>
   );
 }

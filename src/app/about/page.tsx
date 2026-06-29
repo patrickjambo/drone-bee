@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { User, ShieldCheck, HeartPulse, Recycle, Shield, Network } from "lucide-react";
+import WhatsAppFab from "@/components/WhatsAppFab";
 
 export default function About() {
   return (
@@ -111,6 +112,7 @@ export default function About() {
         </div>
         
       </main>
+      <WhatsAppFab />
     </div>
   );
 }
