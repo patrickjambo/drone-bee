@@ -269,16 +269,16 @@ export default function ShopHub() {
               const inCart = qtyInCart(p.id);
               return (
                 <div key={p.id} className="group bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-[0_10px_40px_rgba(23,27,44,0.06)] hover:shadow-[0_22px_55px_rgba(229,181,61,0.22)] hover:-translate-y-2 transition-all duration-500 flex flex-col">
-                  <div className="relative h-64 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-50">
+                  <Link href={`/shop/${p.id}`} className="relative block h-64 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-50">
                     <img src={imgFor(p)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     <span className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide text-[#171B2C] shadow-sm">{p.honey_type}</span>
                     {soldOut
                       ? <span className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black shadow">Sold out</span>
                       : lowStock && <span className="absolute top-4 right-4 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-black shadow">Only {p.stock_units} left</span>}
-                  </div>
+                  </Link>
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex justify-between items-start gap-3 mb-1">
-                      <h3 style={{ fontFamily: "var(--font-display)" }} className="text-xl font-black leading-tight">{p.name}</h3>
+                      <Link href={`/shop/${p.id}`} style={{ fontFamily: "var(--font-display)" }} className="text-xl font-black leading-tight hover:text-amber-600 transition-colors">{p.name}</Link>
                       <span className="text-xl font-black text-amber-600 whitespace-nowrap">RWF {p.price_per_unit.toLocaleString()}</span>
                     </div>
                     <p className="text-sm text-gray-500 mb-4">{p.honey_type}{p.origin ? ` · ${p.origin}` : ""}{p.batch_size > 1 && p.price_per_batch > 0 ? ` · batch of ${p.batch_size} @ RWF ${p.price_per_batch.toLocaleString()}` : ""}</p>
