@@ -16,14 +16,23 @@ async function authAdmin() {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const adminId = await authAdmin();
   if (!adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
   try {
-    // Get last 50 sales for the live feed, including related product and manager names
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status');
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '100', 10), 1), 500);
+
+    const where: any = {};
+    if (status === 'VOIDED') where.status = 'VOIDED';
+    else if (status === 'CONFIRMED') where.status = 'CONFIRMED';
+    else if (status === 'flagged') where.flagged = true;
+
     const sales = await prisma.sale.findMany({
-      take: 50,
+      where,
+      take: limit,
       orderBy: { created_at: 'desc' },
       include: {
         product: { select: { name: true, honey_type: true } },

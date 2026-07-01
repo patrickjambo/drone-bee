@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
-  LayoutDashboard, Users, Package, BellRing, FileText,
+  LayoutDashboard, Users, Package, FileText, ShoppingCart, BellRing,
   Settings, LogOut, Store, BarChart3,
 } from 'lucide-react';
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/sales', label: 'Sales Ledger', icon: ShoppingCart },
   { href: '/admin/managers', label: 'Sales Agents', icon: Users },
   { href: '/admin/products', label: 'Products & Inventory', icon: Package },
   { href: '/admin/audits', label: 'Reports & Audits', icon: FileText },
